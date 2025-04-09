@@ -24,19 +24,29 @@ const PreLaunchReview = lazy(() => import("./pages/pre-launch-review"));
 const TestRegistration = lazy(() => import("./pages/test-registration"));
 const TestingGuide = lazy(() => import("./pages/testing-guide"));
 
+// Loading component for consistent UI
+const LoadingIndicator = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <p className="text-lg">Loading...</p>
+  </div>
+);
+
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isLoading && !user && !redirecting) {
+      setRedirecting(true);
+      console.log("No user found, redirecting to login");
       navigate("/login");
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, redirecting]);
 
   if (isLoading) {
-    return <p>Loading...</p>;
+    return <LoadingIndicator />;
   }
 
   return user ? <>{children}</> : null;
@@ -46,11 +56,11 @@ function AppRoutes() {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return <p>Loading authentication...</p>;
+    return <LoadingIndicator />;
   }
 
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+    <Suspense fallback={<LoadingIndicator />}>
       <>
         <Routes>
           <Route
@@ -64,7 +74,7 @@ function AppRoutes() {
           <Route
             path="/test-registration"
             element={
-              <Suspense fallback={<p>Loading...</p>}>
+              <Suspense fallback={<LoadingIndicator />}>
                 <TestRegistration />
               </Suspense>
             }
@@ -72,7 +82,7 @@ function AppRoutes() {
           <Route
             path="/testing-guide"
             element={
-              <Suspense fallback={<p>Loading...</p>}>
+              <Suspense fallback={<LoadingIndicator />}>
                 <TestingGuide />
               </Suspense>
             }
