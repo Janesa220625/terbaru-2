@@ -52,19 +52,19 @@ const Settings = () => {
           </TabsContent>
 
           <TabsContent value="roles">
-            <AuthWrapper requiredPermission="canManageRoles">
+            <AuthWrapper requiredPermission="canManageSettings">
               <RoleManagement />
             </AuthWrapper>
           </TabsContent>
 
           <TabsContent value="access">
-            <AuthWrapper requiredPermission="canManageAccess">
+            <AuthWrapper requiredPermission="canManageSettings">
               <AccessSettings />
             </AuthWrapper>
           </TabsContent>
 
           <TabsContent value="language">
-            <AuthWrapper requiredPermission="canManageLanguage">
+            <AuthWrapper requiredPermission="canManageSettings">
               <LanguageSettings />
             </AuthWrapper>
           </TabsContent>

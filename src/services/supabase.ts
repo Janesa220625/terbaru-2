@@ -446,10 +446,10 @@ export const signInWithEmail = async (email: string, password: string) => {
       password,
     });
     if (error) throw error;
-    return data;
+    return { data, error: null };
   } catch (error) {
     handleSupabaseError(error as Error, "signInWithEmail");
-    throw error;
+    return { data: null, error };
   }
 };
 

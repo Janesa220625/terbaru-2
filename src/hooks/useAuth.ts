@@ -14,7 +14,10 @@ interface AuthContextType {
   user: UserProfile | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+  ) => Promise<{ success: boolean; error?: any }>;
   signup: (
     email: string,
     password: string,
@@ -25,10 +28,8 @@ interface AuthContextType {
       warehouseId?: string;
     },
   ) => Promise<void>;
-  logout: () => Promise<void>;
-  checkPermission: (
-    permission: keyof UserProfile["permissions"],
-  ) => Promise<boolean>;
+  logout: () => Promise<{ success: boolean; error?: any }>;
+  checkPermission: (permission: keyof UserPermissions) => Promise<boolean>;
   updateProfile: (userData: Partial<UserProfile>) => Promise<boolean>;
   clearError: () => void;
 }
@@ -134,10 +135,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (!email.trim() || !password.trim()) {
         setError("Email and password are required");
-        return;
+        return { success: false, error: "Email and password are required" };
       }
 
-      await signInWithEmail(email, password);
+      const { error } = await signInWithEmail(email, password);
+      if (error) {
+        throw error;
+      }
+
       const currentUser = await getCurrentUser();
       setUser(currentUser);
 
@@ -230,9 +235,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const checkPermission = async (
-    permission: keyof UserProfile["permissions"],
-  ) => {
+  const checkPermission = async (permission: keyof UserPermissions) => {
     return await hasPermission(permission);
   };
 
