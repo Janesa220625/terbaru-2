@@ -48,7 +48,9 @@ if (import.meta.env.PROD) {
     );
 
     // Report navigation timing metrics
-    const navEntry = performance.getEntriesByType("navigation")[0];
+    const navEntry = performance.getEntriesByType(
+      "navigation",
+    )[0] as PerformanceNavigationTiming;
     if (navEntry) {
       console.log(`DOM Content Loaded: ${navEntry.domContentLoadedEventEnd}ms`);
       console.log(`Load Event: ${navEntry.loadEventEnd}ms`);

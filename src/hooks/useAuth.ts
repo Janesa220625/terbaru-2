@@ -145,9 +145,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if ("error" in result && result.error) {
         throw result.error;
       }
-      if (error) {
-        throw error;
-      }
 
       // Ensure we have the latest user data
       const currentUser = await getCurrentUser();

@@ -194,8 +194,6 @@ const Products = () => {
                 </div>
                 <ProductList
                   products={filteredProducts}
-                  searchTerm={searchTerm}
-                  onSearchChange={handleSearch}
                   onAdd={() => setIsAddDialogOpen(true)}
                   onEdit={openEditDialog}
                   onDelete={openDeleteDialog}

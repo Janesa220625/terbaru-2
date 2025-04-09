@@ -413,6 +413,7 @@ const StockUnits = () => {
               localStorage.getItem("warehouse-last-user") ||
               "Unknown",
             boxId: "",
+            manufactureDate: undefined,
           })),
         );
       }

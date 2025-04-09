@@ -1,4 +1,17 @@
-import { OutgoingStockDocument } from "@/components/Inventory/OutgoingStock";
+// Define the interface locally to avoid import issues
+interface OutgoingStockDocument {
+  documentNumber: string;
+  date: string;
+  recipient: string;
+  notes?: string;
+  items: Array<{
+    sku: string;
+    name: string;
+    size: string;
+    color: string;
+    quantity: number;
+  }>;
+}
 
 /**
  * Generates a printable HTML document for an outgoing stock document

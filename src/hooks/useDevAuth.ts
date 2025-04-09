@@ -27,8 +27,8 @@ export const useDevAuth = () => {
         for (const cred of credentials) {
           try {
             console.log(`Trying direct auth with ${cred.email}...`);
-            const { error } = await signInWithEmail(cred.email, cred.password);
-            if (!error) {
+            const result = await signInWithEmail(cred.email, cred.password);
+            if (!result.error) {
               console.log("🔓 DEV MODE: Direct auth successful!");
               setBypassSuccessful(true);
               return true;
