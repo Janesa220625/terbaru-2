@@ -77,7 +77,11 @@ export default defineConfig({
           utils: ["clsx", "tailwind-merge", "class-variance-authority"],
           // Additional chunks for better code splitting
           auth: ["./src/hooks/useAuth.ts", "./src/services/supabase.ts"],
-          inventory: ["./src/components/Inventory"],
+          inventory: [
+            "./src/components/Inventory/ModuleNavigation",
+            "./src/components/Inventory/StockUnits",
+            "./src/components/Inventory/BoxStock",
+          ],
           dashboard: ["./src/components/Dashboard"],
           settings: ["./src/components/settings", "./src/pages/settings.tsx"],
         },

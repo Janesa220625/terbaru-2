@@ -95,10 +95,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // In development mode, create a mock user if fetch fails
         if (import.meta.env.DEV) {
           console.log("DEV MODE: Creating default mock user after fetch error");
-          const mockUser = {
+          const mockUser: UserProfile = {
             id: "dev-user-id",
             email: "dev@example.com",
-            role: "admin",
+            role: "admin" as UserRole,
             firstName: "Dev",
             lastName: "User",
             permissions: {
@@ -141,7 +141,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { success: false, error: "Email and password are required" };
       }
 
-      const { error, data } = await signInWithEmail(email, password);
+      const result = await signInWithEmail(email, password);
+      if ("error" in result && result.error) {
+        throw result.error;
+      }
       if (error) {
         throw error;
       }
