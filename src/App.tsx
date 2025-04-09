@@ -22,6 +22,7 @@ const Inventory = lazy(() => import("./pages/inventory"));
 const Reports = lazy(() => import("./pages/reports"));
 const Settings = lazy(() => import("./pages/settings"));
 const PreLaunchReview = lazy(() => import("./pages/pre-launch-review"));
+const QualityCheck = lazy(() => import("./pages/quality-check"));
 const TestRegistration = lazy(() => import("./pages/test-registration"));
 const TestingGuide = lazy(() => import("./pages/testing-guide"));
 
@@ -149,6 +150,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <PreLaunchReview />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/quality-check"
+              element={
+                <ProtectedRoute>
+                  <QualityCheck />
                 </ProtectedRoute>
               }
             />
