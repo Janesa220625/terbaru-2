@@ -29,7 +29,8 @@ const LoginForm = ({ onSuccess, redirectTo = "/" }: LoginFormProps) => {
   // If user is already logged in, redirect
   useEffect(() => {
     if (user) {
-      navigate(redirectTo);
+      console.log("User already logged in, redirecting to", redirectTo);
+      navigate(redirectTo, { replace: true });
     }
   }, [user, navigate, redirectTo]);
 
@@ -58,11 +59,15 @@ const LoginForm = ({ onSuccess, redirectTo = "/" }: LoginFormProps) => {
     }
 
     try {
-      await login(email, password);
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        navigate(redirectTo);
+      const result = await login(email, password);
+      if (result.success) {
+        console.log("Login successful, redirecting to", redirectTo);
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          // Use replace: true to prevent going back to login page
+          navigate(redirectTo, { replace: true });
+        }
       }
     } catch (err) {
       console.error("Login error:", err);

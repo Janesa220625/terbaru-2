@@ -46,9 +46,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event);
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         try {
           const currentUser = await getCurrentUser();
+          console.log("Current user after auth change:", currentUser);
           setUser(currentUser);
         } catch (err) {
           console.error("Error fetching user after auth change:", err);
@@ -84,6 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         const currentUser = await getCurrentUser();
+        console.log("Fetched current user:", currentUser);
         setUser(currentUser);
       } catch (err) {
         console.error("Error fetching user:", err);
@@ -138,12 +141,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { success: false, error: "Email and password are required" };
       }
 
-      const { error } = await signInWithEmail(email, password);
+      const { error, data } = await signInWithEmail(email, password);
       if (error) {
         throw error;
       }
 
+      // Ensure we have the latest user data
       const currentUser = await getCurrentUser();
+      console.log("Login successful, setting user:", currentUser);
       setUser(currentUser);
 
       // Store login timestamp for session tracking

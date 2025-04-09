@@ -6,6 +6,7 @@ import {
   Route,
   Navigate,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 import Home from "./components/home";
 // @ts-ignore
@@ -35,15 +36,18 @@ const LoadingIndicator = () => (
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !user && !redirecting) {
       setRedirecting(true);
       console.log("No user found, redirecting to login");
-      navigate("/login");
+      // Store the attempted URL for redirect after login
+      sessionStorage.setItem("redirectAfterLogin", location.pathname);
+      navigate("/login", { replace: true });
     }
-  }, [user, isLoading, navigate, redirecting]);
+  }, [user, isLoading, navigate, redirecting, location]);
 
   if (isLoading) {
     return <LoadingIndicator />;
@@ -54,6 +58,18 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 function AppRoutes() {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
+
+  // Effect to handle redirects after login
+  useEffect(() => {
+    if (user && location.pathname === "/login") {
+      const redirectPath = sessionStorage.getItem("redirectAfterLogin") || "/";
+      console.log("User logged in, redirecting to", redirectPath);
+      sessionStorage.removeItem("redirectAfterLogin");
+      // Use window.location to force a full page reload
+      window.location.href = redirectPath;
+    }
+  }, [user, location]);
 
   if (isLoading) {
     return <LoadingIndicator />;
@@ -65,11 +81,11 @@ function AppRoutes() {
         <Routes>
           <Route
             path="/login"
-            element={user ? <Navigate to="/" /> : <LoginForm />}
+            element={user ? <Navigate to="/" replace /> : <LoginForm />}
           />
           <Route
             path="/signup"
-            element={user ? <Navigate to="/" /> : <SignupPage />}
+            element={user ? <Navigate to="/" replace /> : <SignupPage />}
           />
           <Route
             path="/test-registration"
@@ -137,7 +153,7 @@ function AppRoutes() {
               }
             />
           </Route>
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
       </>
