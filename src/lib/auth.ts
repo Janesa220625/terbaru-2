@@ -26,7 +26,7 @@ export const handleSupabaseError = (
 export const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
     const { data, error } = await supabase
-      .from("health_check" as TableNames)
+      .from("health_check" as any)
       .select("*")
       .limit(1);
     if (error) throw error;
@@ -52,7 +52,7 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
 
     // Fetch user profile from profiles table
     const { data: profile, error } = await supabase
-      .from("profiles" as TableNames)
+      .from("profiles" as any)
       .select("*")
       .eq("id", user.id)
       .single();
@@ -68,7 +68,7 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
       // Try to create a default profile
       const defaultRole: UserRole = "viewer";
       const { error: createError } = await supabase
-        .from("profiles" as TableNames)
+        .from("profiles" as any)
         .insert({
           id: user.id,
           email: user.email,
@@ -94,20 +94,22 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
     }
 
     // Ensure role is a valid UserRole
-    const userRole: UserRole = (profile.role as UserRole) || "viewer";
+    const userRole: UserRole = ((profile as any).role as UserRole) || "viewer";
 
     // Combine auth user and profile data
     return {
       id: user.id,
       email: user.email || "",
       role: userRole,
-      firstName: profile.first_name || undefined,
-      lastName: profile.last_name || undefined,
-      warehouseId: profile.warehouse_id || undefined,
+      firstName: (profile as any).first_name || undefined,
+      lastName: (profile as any).last_name || undefined,
+      warehouseId: (profile as any).warehouse_id || undefined,
       permissions: DEFAULT_PERMISSIONS[userRole],
       createdAt:
-        profile.created_at || user.created_at || new Date().toISOString(),
-      updatedAt: profile.updated_at || new Date().toISOString(),
+        (profile as any).created_at ||
+        user.created_at ||
+        new Date().toISOString(),
+      updatedAt: (profile as any).updated_at || new Date().toISOString(),
     };
   } catch (error) {
     handleSupabaseError(error as Error, "getCurrentUser");
@@ -178,7 +180,7 @@ export async function signUpWithEmail(
 
     // Create a profile record for the user
     const { error: profileError } = await supabase
-      .from("profiles" as TableNames)
+      .from("profiles" as any)
       .insert({
         id: data.user.id,
         email: email,
@@ -216,7 +218,7 @@ export const updateUserProfile = async (
 ) => {
   try {
     const { error } = await supabase
-      .from("profiles" as TableNames)
+      .from("profiles" as any)
       .update({
         first_name: userData.firstName,
         last_name: userData.lastName,
@@ -246,27 +248,26 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
     }
 
     // Get all users from profiles table
-    const { data, error } = await supabase
-      .from("profiles" as TableNames)
-      .select("*");
+    const { data, error } = await supabase.from("profiles" as any).select("*");
 
     if (error) throw error;
 
     // Map to UserProfile format
     return (data || []).map((profile) => {
       // Ensure role is a valid UserRole
-      const userRole: UserRole = (profile.role as UserRole) || "viewer";
+      const userRole: UserRole =
+        ((profile as any).role as UserRole) || "viewer";
 
       return {
         id: profile.id,
-        email: profile.email || "",
+        email: (profile as any).email || "",
         role: userRole,
-        firstName: profile.first_name || undefined,
-        lastName: profile.last_name || undefined,
-        warehouseId: profile.warehouse_id || undefined,
+        firstName: (profile as any).first_name || undefined,
+        lastName: (profile as any).last_name || undefined,
+        warehouseId: (profile as any).warehouse_id || undefined,
         permissions: DEFAULT_PERMISSIONS[userRole],
-        createdAt: profile.created_at || new Date().toISOString(),
-        updatedAt: profile.updated_at || new Date().toISOString(),
+        createdAt: (profile as any).created_at || new Date().toISOString(),
+        updatedAt: (profile as any).updated_at || new Date().toISOString(),
       };
     });
   } catch (error) {

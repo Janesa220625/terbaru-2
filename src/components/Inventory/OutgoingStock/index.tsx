@@ -203,7 +203,7 @@ const OutgoingStock = () => {
     };
 
     const updatedOutgoingDocuments = [newOutgoingDoc, ...outgoingDocuments];
-    setOutgoingDocuments(updatedOutgoingDocuments);
+    setOutgoingDocuments(updatedOutgoingDocuments as any);
     saveToLocalStorage(
       "warehouse-outgoing-documents",
       updatedOutgoingDocuments,
@@ -294,7 +294,7 @@ const OutgoingStock = () => {
 
       // Add the new documents to the existing ones
       const updatedOutgoingDocuments = [...newDocuments, ...outgoingDocuments];
-      setOutgoingDocuments(updatedOutgoingDocuments);
+      setOutgoingDocuments(updatedOutgoingDocuments as any);
       saveToLocalStorage(
         "warehouse-outgoing-documents",
         updatedOutgoingDocuments,

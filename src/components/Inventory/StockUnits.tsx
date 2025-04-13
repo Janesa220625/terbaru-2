@@ -396,7 +396,7 @@ const StockUnits = () => {
     setUploadError(null);
 
     try {
-      const result = await parseExcelTemplate(file, products);
+      const result = await parseExcelTemplate(file);
       setValidationResults(result);
       setShowValidation(true);
 
@@ -425,8 +425,11 @@ const StockUnits = () => {
       setIsUploading(false);
     }
   };
+  };
 
   return (
     <div className="bg-white p-4">{/* Component JSX would go here */}</div>
   );
 };
+
+export default StockUnits;

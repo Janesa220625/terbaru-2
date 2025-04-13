@@ -97,7 +97,7 @@ const BatchOperations = () => {
               boxId: "",
               dateAdded: new Date(),
               addedBy: "Batch Import",
-            })) as any[],
+            })),
           );
 
           setImportStatus({

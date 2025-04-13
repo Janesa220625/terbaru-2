@@ -18,7 +18,7 @@ export async function fetchData<T>(
     offset?: number;
   },
 ) {
-  let query = supabase.from(table).select(options?.columns || "*");
+  let query = supabase.from(table as any).select(options?.columns || "*");
 
   // Apply filters if provided
   if (options?.filters) {
@@ -60,8 +60,8 @@ export async function insertData<T>(
   data: Record<string, unknown> | Record<string, unknown>[], // More specific type than any
 ) {
   const { data: result, error } = await supabase
-    .from(table)
-    .insert(data)
+    .from(table as any)
+    .insert(data as any)
     .select();
   return { data: result as T[] | null, error };
 }
@@ -76,8 +76,8 @@ export async function updateData<T>(
   idColumn = "id",
 ) {
   const { data: result, error } = await supabase
-    .from(table)
-    .update(data)
+    .from(table as any)
+    .update(data as any)
     .eq(idColumn, id)
     .select();
   return { data: result as T[] | null, error };
@@ -91,7 +91,10 @@ export async function deleteData(
   id: string | number,
   idColumn = "id",
 ) {
-  const { error } = await supabase.from(table).delete().eq(idColumn, id);
+  const { error } = await supabase
+    .from(table as any)
+    .delete()
+    .eq(idColumn, id);
   return { error };
 }
 
@@ -213,7 +216,9 @@ export async function countRecords(
   table: TableNames,
   filters?: Record<string, unknown>,
 ) {
-  let query = supabase.from(table).select("*", { count: "exact", head: true });
+  let query = supabase
+    .from(table as any)
+    .select("*", { count: "exact", head: true });
 
   // Apply filters if provided
   if (filters) {
@@ -236,7 +241,7 @@ export async function upsertData<T>(
   data: Record<string, unknown> | Record<string, unknown>[], // More specific type than any
   onConflict?: string,
 ) {
-  let query = supabase.from(table).upsert(data);
+  let query = supabase.from(table as any).upsert(data as any);
 
   if (onConflict) {
     query = query.onConflict(onConflict);
