@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { loadFromLocalStorage, saveToLocalStorage } from '@/lib/storage';
-import { AggregatedStockItem } from '../../SingleWarehouseStock';
-import { Recipient } from '../../RecipientManagement';
-import { generateUUID } from '@/lib/utils/uuidUtils';
-import { OutgoingStockDocument, OutgoingStockItem } from '../OutgoingDocumentList';
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { loadFromLocalStorage, saveToLocalStorage } from "@/lib/storage";
+import { AggregatedStockItem } from "../../SingleWarehouseStock";
+import { Recipient } from "../../RecipientManagement";
+import { generateUUID } from "@/lib/utils/uuidUtils";
+import {
+  OutgoingStockDocument,
+  OutgoingStockItem,
+} from "../OutgoingDocumentList";
 
 interface SelectedStockItem {
   id: string;
@@ -28,9 +31,15 @@ interface StockItem {
 
 export const useOutgoingStock = (stockUnits: any[]) => {
   const [stockItems, setStockItems] = useState<StockItem[]>([]);
-  const [outgoingDocuments, setOutgoingDocuments] = useState<OutgoingStockDocument[]>([]);
-  const [availableStock, setAvailableStock] = useState<AggregatedStockItem[]>([]);
-  const [selectedStockItems, setSelectedStockItems] = useState<SelectedStockItem[]>([]);
+  const [outgoingDocuments, setOutgoingDocuments] = useState<
+    OutgoingStockDocument[]
+  >([]);
+  const [availableStock, setAvailableStock] = useState<AggregatedStockItem[]>(
+    [],
+  );
+  const [selectedStockItems, setSelectedStockItems] = useState<
+    SelectedStockItem[]
+  >([]);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
 
   // Generate a document number
@@ -129,10 +138,9 @@ export const useOutgoingStock = (stockUnits: any[]) => {
   useEffect(() => {
     try {
       // Load outgoing documents from localStorage
-      const savedOutgoingDocuments = loadFromLocalStorage<OutgoingStockDocument[]>(
-        "warehouse-outgoing-documents", 
-        []
-      );
+      const savedOutgoingDocuments = loadFromLocalStorage<
+        OutgoingStockDocument[]
+      >("warehouse-outgoing-documents", []);
       setOutgoingDocuments(savedOutgoingDocuments);
 
       // Load recipients from localStorage
@@ -221,7 +229,11 @@ export const useOutgoingStock = (stockUnits: any[]) => {
     setSelectedStockItems(updatedItems);
   };
 
-  const createOutgoingDocument = (recipientId: string, recipientName: string, notes: string) => {
+  const createOutgoingDocument = (
+    recipientId: string,
+    recipientName: string,
+    notes: string,
+  ) => {
     if (!recipientId || selectedStockItems.length === 0) {
       return false;
     }
@@ -258,4 +270,42 @@ export const useOutgoingStock = (stockUnits: any[]) => {
     }));
 
     const totalItems = outgoingItems.reduce(
-      (sum, item
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+
+    const newDocument: OutgoingStockDocument = {
+      id: generateUUID(),
+      documentNumber: generateDocumentNumber(),
+      recipientId,
+      recipientName,
+      date: new Date().toISOString(),
+      status: "pending",
+      items: outgoingItems,
+      totalItems,
+      notes,
+    };
+
+    // Save the new document
+    const updatedDocuments = [...outgoingDocuments, newDocument];
+    setOutgoingDocuments(updatedDocuments);
+    saveToLocalStorage("warehouse-outgoing-documents", updatedDocuments);
+
+    // Clear selected items
+    setSelectedStockItems([]);
+
+    return newDocument;
+  };
+
+  return {
+    stockItems,
+    availableStock,
+    selectedStockItems,
+    outgoingDocuments,
+    recipients,
+    addStockItemToOutgoing,
+    removeStockItemFromOutgoing,
+    updateStockItemQuantity,
+    createOutgoingDocument,
+  };
+};
