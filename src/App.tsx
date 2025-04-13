@@ -204,7 +204,7 @@ function DevAuthInitializer() {
       useEffect(() => {
         console.log("🔧 DEV MODE: Initializing automatic authentication");
         // Import the module but don't call the hook directly
-        import("@/hooks/useDevAuth").then((module) => {
+        import("./hooks/useDevAuth").then((module) => {
           // Instead of calling the hook here, we'll set a flag
           // The hook will be used properly in the DevAuthHookUser component
           setInitialized(true);
@@ -230,7 +230,7 @@ function DevAuthHookUser() {
 
   React.useEffect(() => {
     // Dynamically import the hook
-    import("@/hooks/useDevAuth").then((module) => {
+    import("./hooks/useDevAuth").then((module) => {
       // Create a component that uses the hook
       const DevAuthHookComponent = () => {
         module.useDevAuth();
