@@ -201,7 +201,7 @@ export function useStockUnits() {
 
   // Add new stock units
   const addStockUnits = async (
-    newUnits: Omit<StockUnitItem, "id" | "dateAdded">[],
+    newUnits: Omit<StockUnitItem, "id"> & { dateAdded?: Date | string }[],
   ) => {
     if (newUnits.length === 0) return;
 
@@ -209,12 +209,16 @@ export function useStockUnits() {
     // Default user name if not provided
     const defaultUser = "Warehouse Staff";
 
-    const newStockUnits = newUnits.map((unit, index) => ({
-      ...unit,
-      id: `u${1000 + stockUnits.length + 1 + index}`,
-      dateAdded: unit.dateAdded || currentDate,
-      addedBy: unit.addedBy || defaultUser,
-    })) as StockUnitItem[];
+    const newStockUnits = newUnits.map((unit, index) => {
+      // Extract dateAdded from unit to avoid TypeScript error
+      const { dateAdded, ...restUnit } = unit;
+      return {
+        ...restUnit,
+        id: `u${1000 + stockUnits.length + 1 + index}`,
+        dateAdded: dateAdded || currentDate,
+        addedBy: unit.addedBy || defaultUser,
+      };
+    }) as StockUnitItem[];
 
     const updatedStockUnits = [...stockUnits, ...newStockUnits];
     setStockUnits(updatedStockUnits);

@@ -48,7 +48,7 @@ export async function fetchData<T>(
   }
 
   const { data, error } = await query;
-  return { data: data as T[], error };
+  return { data: data as T[] | null, error };
 }
 
 /**
@@ -60,9 +60,9 @@ export async function insertData<T>(
 ) {
   const { data: result, error } = await supabase
     .from(table)
-    .insert(data as any)
+    .insert(data)
     .select();
-  return { data: result as T[], error };
+  return { data: result as T[] | null, error };
 }
 
 /**
@@ -76,10 +76,10 @@ export async function updateData<T>(
 ) {
   const { data: result, error } = await supabase
     .from(table)
-    .update(data as any)
+    .update(data)
     .eq(idColumn, id)
     .select();
-  return { data: result as T[], error };
+  return { data: result as T[] | null, error };
 }
 
 /**
@@ -202,7 +202,7 @@ export async function fetchDataWithFilters<T>(
   }
 
   const { data, error } = await query;
-  return { data: data as T[], error };
+  return { data: data as T[] | null, error };
 }
 
 /**
@@ -235,12 +235,12 @@ export async function upsertData<T>(
   data: Partial<T> | Partial<T>[],
   onConflict?: string,
 ) {
-  let query = supabase.from(table).upsert(data as any);
+  let query = supabase.from(table).upsert(data);
 
   if (onConflict) {
     query = query.onConflict(onConflict);
   }
 
   const { data: result, error } = await query.select();
-  return { data: result as T[], error };
+  return { data: result as T[] | null, error };
 }

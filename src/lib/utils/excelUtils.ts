@@ -4,16 +4,24 @@ import { Product } from "@/lib/hooks/useProductData";
 import { StockUnitItem } from "@/lib/hooks/useStockUnits";
 import { ValidationItem } from "@/components/Inventory/ValidationDisplay";
 
+// Export the validation result types
+export interface ValidationResult {
+  validItems: ValidationItem[];
+  invalidItems: ValidationItem[];
+}
+
+export interface BoxStockValidationResult {
+  validItems: any[];
+  invalidItems: any[];
+}
+
 /**
  * Parses an uploaded Excel template for stock units
  * @param file The uploaded Excel file
  * @returns Object containing valid and invalid stock units with validation details
  */
 export async function parseExcelTemplate(file: File) {
-  return new Promise<{
-    validItems: ValidationItem[];
-    invalidItems: ValidationItem[];
-  }>((resolve, reject) => {
+  return new Promise<ValidationResult>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -111,10 +119,7 @@ export async function parseExcelTemplate(file: File) {
  * @returns Object containing valid and invalid box stock items with validation details
  */
 export async function parseBoxStockExcelTemplate(file: File) {
-  return new Promise<{
-    validItems: any[];
-    invalidItems: any[];
-  }>((resolve, reject) => {
+  return new Promise<BoxStockValidationResult>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -764,10 +769,7 @@ export async function parseOutgoingStockExcelTemplate(
   availableStock: any[],
   recipients: any[],
 ) {
-  return new Promise<{
-    validItems: any[];
-    invalidItems: any[];
-  }>((resolve, reject) => {
+  return new Promise<BoxStockValidationResult>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {

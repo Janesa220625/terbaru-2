@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/supabase";
 import { UserProfile, UserRole, DEFAULT_PERMISSIONS } from "@/types/auth";
+import { ProfileInsert, ProfileUpdate } from "@/types/profiles";
 
 // Initialize the Supabase client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
@@ -73,6 +74,7 @@ export const checkSupabaseConnection = async (): Promise<{
     );
 
     // Try to access the health_check table
+    // Use explicit typing for the health_check table
     const { data: healthData, error: healthError } = await supabase
       .from("health_check")
       .select("*")
@@ -96,8 +98,11 @@ export const checkSupabaseConnection = async (): Promise<{
 
     // Try to get a list of available tables
     try {
-      const { data: tablesData, error: tablesError } =
-        await supabase.rpc("get_tables");
+      // Explicitly type the RPC function call
+      const { data: tablesData, error: tablesError } = await supabase.rpc(
+        "get_tables",
+        {},
+      );
 
       if (tablesError) {
         console.warn("Could not retrieve table list:", tablesError);
@@ -138,6 +143,7 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
     if (!user) return null;
 
     // Fetch user profile from profiles table
+    // Use explicit type for the profiles table
     const { data: profile, error } = await supabase
       .from("profiles")
       .select("*")
@@ -154,13 +160,17 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
 
       // Try to create a default profile
       const defaultRole: UserRole = "viewer";
-      const { error: createError } = await supabase.from("profiles").insert({
+      // Use the ProfileInsert type to ensure type safety
+      const profileData: ProfileInsert = {
         id: user.id,
-        email: user.email,
+        email: user.email || "",
         role: defaultRole,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      });
+      };
+      const { error: createError } = await supabase
+        .from("profiles")
+        .insert(profileData);
 
       if (createError) {
         console.error("Failed to create default profile:", createError.message);
@@ -275,7 +285,8 @@ export const signUpWithEmail = async (
     }
 
     // Create a profile record for the user
-    const { error: profileError } = await supabase.from("profiles").insert({
+    // Use the ProfileInsert type to ensure type safety
+    const profileData: ProfileInsert = {
       id: data.user.id,
       email: email,
       first_name: userData.firstName,
@@ -284,7 +295,10 @@ export const signUpWithEmail = async (
       warehouse_id: userData.warehouseId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    });
+    };
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert(profileData);
 
     if (profileError) {
       console.error("Error creating user profile:", profileError.message);
@@ -320,15 +334,17 @@ export const updateUserProfile = async (
       throw error;
     }
 
+    // Use the ProfileUpdate type to ensure type safety
+    const profileUpdate: ProfileUpdate = {
+      first_name: userData.firstName,
+      last_name: userData.lastName,
+      role: userData.role,
+      warehouse_id: userData.warehouseId,
+      updated_at: new Date().toISOString(),
+    };
     const { error } = await supabase
       .from("profiles")
-      .update({
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        role: userData.role,
-        warehouse_id: userData.warehouseId,
-        updated_at: new Date().toISOString(),
-      })
+      .update(profileUpdate)
       .eq("id", userId);
 
     if (error) throw error;

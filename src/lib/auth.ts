@@ -72,7 +72,7 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
         role: defaultRole,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      } as any);
+      });
 
       if (createError) {
         console.error("Failed to create default profile:", createError.message);
@@ -180,7 +180,7 @@ export async function signUpWithEmail(
       warehouse_id: userData.warehouseId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    } as any);
+    });
 
     if (profileError) {
       console.error("Error creating user profile:", profileError.message);
@@ -215,7 +215,7 @@ export const updateUserProfile = async (
         role: userData.role,
         warehouse_id: userData.warehouseId,
         updated_at: new Date().toISOString(),
-      } as any)
+      })
       .eq("id", userId);
 
     if (error) throw error;

@@ -257,7 +257,7 @@ const StockOpname = () => {
     const newHistoryItem: StockOpnameItem = {
       id: newStockCount.id,
       date: newStockCount.date,
-      status: "pending",
+      status: "pending" as "pending",
       totalItems: products.length,
       matchedItems: 0,
       discrepancies: 0,

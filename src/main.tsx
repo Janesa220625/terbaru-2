@@ -8,7 +8,9 @@ import { Providers } from "./lib/providers";
 import { TempoDevtools } from "tempo-devtools";
 TempoDevtools.init();
 
-const basename = import.meta.env.BASE_URL;
+const basename = import.meta.env.BASE_URL
+  ? String(import.meta.env.BASE_URL)
+  : "";
 
 // Enhanced Performance measurement
 if (import.meta.env.PROD) {

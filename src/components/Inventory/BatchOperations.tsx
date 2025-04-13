@@ -116,7 +116,8 @@ const BatchOperations = () => {
           });
         }
       } else if (importType === "boxStock") {
-        const results = await parseBoxStockExcelTemplate(file);
+        const results: BoxStockValidationResult =
+          await parseBoxStockExcelTemplate(file);
 
         if (
           results.validItems.length === 0 &&
@@ -140,7 +141,7 @@ const BatchOperations = () => {
           // Merge with new items (replace existing ones with same SKU)
           const mergedBoxStock = [...existingBoxStock];
 
-          results.validItems.forEach((newItem) => {
+          results.validItems.forEach((newItem: Record<string, any>) => {
             const existingIndex = mergedBoxStock.findIndex(
               (item) => item.sku.toLowerCase() === newItem.sku.toLowerCase(),
             );
