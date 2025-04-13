@@ -28,6 +28,8 @@ import {
   generateBoxStockExcelTemplate,
   parseBoxStockExcelTemplate,
   generateInventoryExportExcel,
+  ValidationResult,
+  BoxStockValidationResult,
 } from "@/lib/utils/excelUtils";
 import ValidationDisplay, { ValidationItem } from "./ValidationDisplay";
 
@@ -42,10 +44,10 @@ const BatchOperations = () => {
     message: string;
     count?: number;
   } | null>(null);
-  const [validationResults, setValidationResults] = useState<{
-    validItems: ValidationItem[];
-    invalidItems: ValidationItem[];
-  }>({ validItems: [], invalidItems: [] });
+  const [validationResults, setValidationResults] = useState<ValidationResult>({
+    validItems: [],
+    invalidItems: [],
+  });
   const [showValidation, setShowValidation] = useState(false);
 
   // Get product data and stock units hooks

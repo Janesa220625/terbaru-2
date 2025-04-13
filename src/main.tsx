@@ -20,7 +20,11 @@ if (import.meta.env.PROD) {
     for (const entry of entries.getEntries()) {
       if (entry.name === "first-contentful-paint") {
         console.log(`First Contentful Paint: ${entry.startTime.toFixed(2)}ms`);
-        performance.measure("time-to-fcp", "app-init-start", entry.startTime);
+        performance.measure(
+          "time-to-fcp",
+          "app-init-start",
+          "first-contentful-paint",
+        );
       }
     }
     paintObserver.disconnect();
@@ -48,12 +52,16 @@ if (import.meta.env.PROD) {
     );
 
     // Report navigation timing metrics
-    const navEntry = performance.getEntriesByType(
-      "navigation",
-    )[0] as PerformanceNavigationTiming;
+    const navEntries = performance.getEntriesByType("navigation");
+    const navEntry =
+      navEntries.length > 0
+        ? (navEntries[0] as PerformanceNavigationTiming)
+        : null;
     if (navEntry) {
-      console.log(`DOM Content Loaded: ${navEntry.domContentLoadedEventEnd}ms`);
-      console.log(`Load Event: ${navEntry.loadEventEnd}ms`);
+      console.log(
+        `DOM Content Loaded: ${navEntry.domContentLoadedEventEnd.toFixed(2)}ms`,
+      );
+      console.log(`Load Event: ${navEntry.loadEventEnd.toFixed(2)}ms`);
     }
   });
 }

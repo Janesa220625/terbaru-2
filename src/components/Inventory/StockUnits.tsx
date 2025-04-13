@@ -141,6 +141,7 @@ const StockUnits = () => {
   // Function to validate if the total quantity exceeds available stock
   const validateStockQuantity = (totalQuantity: number): boolean => {
     if (!availableBoxStock) return true; // No box stock data to validate against
+    if (availableBoxStock.totalPairs === undefined) return true; // No total pairs data to validate against
 
     // Calculate the total quantity that would be allocated after this addition
     const totalAllocated = allocatedPairs + totalQuantity;
@@ -190,7 +191,7 @@ const StockUnits = () => {
       // Validate against available box stock
       if (!validateStockQuantity(newUnit.quantity)) {
         setSkuError(
-          `Cannot add ${newUnit.quantity} pairs. Only ${availableBoxStock?.totalPairs - allocatedPairs} pairs available.`,
+          `Cannot add ${newUnit.quantity} pairs. Only ${availableBoxStock?.totalPairs ? availableBoxStock.totalPairs - allocatedPairs : 0} pairs available.`,
         );
         setExceedsAvailableStock(true);
         return;
@@ -229,7 +230,7 @@ const StockUnits = () => {
       // Validate against available box stock
       if (!validateStockQuantity(totalQuantity)) {
         setSkuError(
-          `Cannot add ${totalQuantity} pairs. Only ${availableBoxStock?.totalPairs - allocatedPairs} pairs available.`,
+          `Cannot add ${totalQuantity} pairs. Only ${availableBoxStock?.totalPairs ? availableBoxStock.totalPairs - allocatedPairs : 0} pairs available.`,
         );
         setExceedsAvailableStock(true);
         return;

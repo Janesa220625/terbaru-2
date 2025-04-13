@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase } from "@/lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
 import type { UserProfile, UserRole, UserPermissions } from "@/types/auth";
 import { DEFAULT_PERMISSIONS } from "@/types/auth";
@@ -6,7 +6,14 @@ import { DEFAULT_PERMISSIONS } from "@/types/auth";
 /**
  * Utility function to handle Supabase errors consistently
  */
-export const handleSupabaseError = (error: Error, context: string) => {
+export const handleSupabaseError = (
+  error: Error | unknown,
+  context: string,
+) => {
+  if (!(error instanceof Error)) {
+    console.error(`Supabase error in ${context}:`, error);
+    return new Error(`Unknown error in ${context}`);
+  }
   console.error(`Supabase error in ${context}:`, error.message);
   // In production, you might want to log to a service like Sentry
   return error;
@@ -65,7 +72,7 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
         role: defaultRole,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      });
+      } as any);
 
       if (createError) {
         console.error("Failed to create default profile:", createError.message);
@@ -173,7 +180,7 @@ export async function signUpWithEmail(
       warehouse_id: userData.warehouseId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    });
+    } as any);
 
     if (profileError) {
       console.error("Error creating user profile:", profileError.message);
@@ -208,7 +215,7 @@ export const updateUserProfile = async (
         role: userData.role,
         warehouse_id: userData.warehouseId,
         updated_at: new Date().toISOString(),
-      })
+      } as any)
       .eq("id", userId);
 
     if (error) throw error;

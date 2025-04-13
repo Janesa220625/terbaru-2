@@ -64,7 +64,9 @@ export default function DataMigration() {
 
       const result = await migrateLocalStorageToSupabase();
       setMigrationResult({
-        ...result,
+        success: result.success,
+        migrated: result.migrated,
+        errors: result.errors,
       });
 
       // Log the result for debugging

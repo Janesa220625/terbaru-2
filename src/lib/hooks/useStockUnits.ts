@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { loadFromLocalStorage, saveToLocalStorage } from "@/lib/storage";
+import { loadFromStorage, saveToStorage } from "@/lib/storage";
 
 // Stock unit interface
 export interface StockUnitItem {
@@ -9,11 +9,11 @@ export interface StockUnitItem {
   color: string;
   quantity: number;
   boxId: string;
-  dateAdded: Date; // Date when the stock unit was added
+  dateAdded: Date | string; // Date when the stock unit was added (can be Date object or ISO string)
   addedBy?: string; // User who added the stock unit
-  lastModified?: Date; // Date when the stock unit was last modified
+  lastModified?: Date | string; // Date when the stock unit was last modified
   modifiedBy?: string; // User who last modified the stock unit
-  manufactureDate?: Date; // Date when the product was manufactured
+  manufactureDate?: Date | string; // Date when the product was manufactured
 }
 
 // Box stock interface
@@ -48,50 +48,57 @@ const calculateBoxesToReduce = (
  * @param sku SKU code to update
  * @param pairsAllocated Number of pairs allocated
  */
-const updateBoxStock = (sku: string, pairsAllocated: number): void => {
-  // Load current box stock
-  const boxStock = loadFromLocalStorage<BoxStockItem[]>(
-    "warehouse-box-stock",
-    [],
-  );
+const updateBoxStock = async (
+  sku: string,
+  pairsAllocated: number,
+): Promise<void> => {
+  try {
+    // Load current box stock
+    const { data: boxStock } = await loadFromStorage<BoxStockItem[]>(
+      "warehouse-box-stock",
+      [],
+    );
 
-  // Find the box stock item for this SKU
-  const boxStockItem = boxStock.find(
-    (item) => item.sku.toLowerCase() === sku.toLowerCase(),
-  );
+    // Find the box stock item for this SKU
+    const boxStockItem = boxStock.find(
+      (item) => item.sku.toLowerCase() === sku.toLowerCase(),
+    );
 
-  if (!boxStockItem) return; // No box stock found for this SKU
+    if (!boxStockItem) return; // No box stock found for this SKU
 
-  // Calculate boxes to reduce
-  const boxesToReduce = calculateBoxesToReduce(
-    pairsAllocated,
-    boxStockItem.pairsPerBox,
-  );
+    // Calculate boxes to reduce
+    const boxesToReduce = calculateBoxesToReduce(
+      pairsAllocated,
+      boxStockItem.pairsPerBox,
+    );
 
-  // Update box stock
-  const updatedBoxStock = boxStock.map((item) => {
-    if (item.sku.toLowerCase() === sku.toLowerCase()) {
-      // Ensure we don't go below zero
-      const newBoxCount = Math.max(0, item.boxCount - boxesToReduce);
-      const newTotalPairs = newBoxCount * item.pairsPerBox;
+    // Update box stock
+    const updatedBoxStock = boxStock.map((item) => {
+      if (item.sku.toLowerCase() === sku.toLowerCase()) {
+        // Ensure we don't go below zero
+        const newBoxCount = Math.max(0, item.boxCount - boxesToReduce);
+        const newTotalPairs = newBoxCount * item.pairsPerBox;
 
-      // Calculate new stock level
-      let newStockLevel: "low" | "medium" | "high" = "low";
-      if (newBoxCount > 30) newStockLevel = "high";
-      else if (newBoxCount > 15) newStockLevel = "medium";
+        // Calculate new stock level
+        let newStockLevel: "low" | "medium" | "high" = "low";
+        if (newBoxCount > 30) newStockLevel = "high";
+        else if (newBoxCount > 15) newStockLevel = "medium";
 
-      return {
-        ...item,
-        boxCount: newBoxCount,
-        totalPairs: newTotalPairs,
-        stockLevel: newStockLevel,
-      };
-    }
-    return item;
-  });
+        return {
+          ...item,
+          boxCount: newBoxCount,
+          totalPairs: newTotalPairs,
+          stockLevel: newStockLevel,
+        };
+      }
+      return item;
+    });
 
-  // Save updated box stock
-  saveToLocalStorage("warehouse-box-stock", updatedBoxStock);
+    // Save updated box stock
+    await saveToStorage("warehouse-box-stock", updatedBoxStock);
+  } catch (error) {
+    console.error("Error updating box stock:", error);
+  }
 };
 
 /**
@@ -103,94 +110,97 @@ export function useStockUnits() {
 
   // Load initial stock units data
   useEffect(() => {
-    try {
-      const defaultStockUnits = [
-        {
-          id: "u1001",
-          sku: "SKU-101-BLK",
-          size: "40",
-          color: "Black",
-          quantity: 10,
-          boxId: "1001",
-          dateAdded: new Date(2023, 5, 15, 9, 30), // June 15, 2023, 9:30 AM
-          addedBy: "System",
-        },
-        {
-          id: "u1002",
-          sku: "SKU-101-BLK",
-          size: "41",
-          color: "Black",
-          quantity: 10,
-          boxId: "1001",
-          dateAdded: new Date(2023, 5, 15, 9, 45), // June 15, 2023, 9:45 AM
-          addedBy: "System",
-        },
-        {
-          id: "u1003",
-          sku: "SKU-101-BLK",
-          size: "42",
-          color: "Black",
-          quantity: 10,
-          boxId: "1001",
-          dateAdded: new Date(2023, 5, 15, 10, 0), // June 15, 2023, 10:00 AM
-          addedBy: "System",
-        },
-        {
-          id: "u1004",
-          sku: "SKU-102-BLK",
-          size: "39",
-          color: "Brown",
-          quantity: 15,
-          boxId: "1002",
-          dateAdded: new Date(2023, 6, 20, 14, 15), // July 20, 2023, 2:15 PM
-          addedBy: "System",
-        },
-        {
-          id: "u1005",
-          sku: "SKU-102-BLK",
-          size: "40",
-          color: "Brown",
-          quantity: 15,
-          boxId: "1002",
-          dateAdded: new Date(2023, 6, 20, 14, 30), // July 20, 2023, 2:30 PM
-          addedBy: "System",
-        },
-        {
-          id: "u1006",
-          sku: "SKU-102-BLK",
-          size: "41",
-          color: "Brown",
-          quantity: 15,
-          boxId: "1002",
-          dateAdded: new Date(2023, 6, 20, 14, 45), // July 20, 2023, 2:45 PM
-          addedBy: "System",
-        },
-        {
-          id: "u1007",
-          sku: "SKU-102-BLK",
-          size: "42",
-          color: "Brown",
-          quantity: 15,
-          boxId: "1002",
-          dateAdded: new Date(2023, 6, 20, 15, 0), // July 20, 2023, 3:00 PM
-          addedBy: "System",
-        },
-      ];
+    const loadStockUnits = async () => {
+      try {
+        const defaultStockUnits = [
+          {
+            id: "u1001",
+            sku: "SKU-101-BLK",
+            size: "40",
+            color: "Black",
+            quantity: 10,
+            boxId: "1001",
+            dateAdded: new Date(2023, 5, 15, 9, 30), // June 15, 2023, 9:30 AM
+            addedBy: "System",
+          },
+          {
+            id: "u1002",
+            sku: "SKU-101-BLK",
+            size: "41",
+            color: "Black",
+            quantity: 10,
+            boxId: "1001",
+            dateAdded: new Date(2023, 5, 15, 9, 45), // June 15, 2023, 9:45 AM
+            addedBy: "System",
+          },
+          {
+            id: "u1003",
+            sku: "SKU-101-BLK",
+            size: "42",
+            color: "Black",
+            quantity: 10,
+            boxId: "1001",
+            dateAdded: new Date(2023, 5, 15, 10, 0), // June 15, 2023, 10:00 AM
+            addedBy: "System",
+          },
+          {
+            id: "u1004",
+            sku: "SKU-102-BLK",
+            size: "39",
+            color: "Brown",
+            quantity: 15,
+            boxId: "1002",
+            dateAdded: new Date(2023, 6, 20, 14, 15), // July 20, 2023, 2:15 PM
+            addedBy: "System",
+          },
+          {
+            id: "u1005",
+            sku: "SKU-102-BLK",
+            size: "40",
+            color: "Brown",
+            quantity: 15,
+            boxId: "1002",
+            dateAdded: new Date(2023, 6, 20, 14, 30), // July 20, 2023, 2:30 PM
+            addedBy: "System",
+          },
+          {
+            id: "u1006",
+            sku: "SKU-102-BLK",
+            size: "41",
+            color: "Brown",
+            quantity: 15,
+            boxId: "1002",
+            dateAdded: new Date(2023, 6, 20, 14, 45), // July 20, 2023, 2:45 PM
+            addedBy: "System",
+          },
+          {
+            id: "u1007",
+            sku: "SKU-102-BLK",
+            size: "42",
+            color: "Brown",
+            quantity: 15,
+            boxId: "1002",
+            dateAdded: new Date(2023, 6, 20, 15, 0), // July 20, 2023, 3:00 PM
+            addedBy: "System",
+          },
+        ];
 
-      const savedStockUnits = loadFromLocalStorage<StockUnitItem[]>(
-        "warehouse-stock-units",
-        defaultStockUnits,
-      );
-      setStockUnits(savedStockUnits);
-    } catch (error) {
-      console.error("Error loading stock units:", error);
-      // Set default empty array if loading fails
-      setStockUnits([]);
-    }
+        const { data: savedStockUnits } = await loadFromStorage<
+          StockUnitItem[]
+        >("warehouse-stock-units", defaultStockUnits);
+        setStockUnits(savedStockUnits);
+      } catch (error) {
+        console.error("Error loading stock units:", error);
+        // Set default empty array if loading fails
+        setStockUnits([]);
+      }
+    };
+
+    loadStockUnits();
   }, []);
 
   // Add new stock units
-  const addStockUnits = (
+  const addStockUnits = async (
     newUnits: Omit<StockUnitItem, "id" | "dateAdded">[],
   ) => {
     if (newUnits.length === 0) return;
@@ -204,34 +214,40 @@ export function useStockUnits() {
       id: `u${1000 + stockUnits.length + 1 + index}`,
       dateAdded: unit.dateAdded || currentDate,
       addedBy: unit.addedBy || defaultUser,
-    }));
+    })) as StockUnitItem[];
 
     const updatedStockUnits = [...stockUnits, ...newStockUnits];
     setStockUnits(updatedStockUnits);
-    saveToLocalStorage("warehouse-stock-units", updatedStockUnits);
 
-    // Group new units by SKU to update box stock
-    const skuQuantities: Record<string, number> = {};
+    try {
+      await saveToStorage("warehouse-stock-units", updatedStockUnits);
 
-    // Calculate total quantity for each SKU
-    newUnits.forEach((unit) => {
-      const sku = unit.sku.toLowerCase();
-      if (!skuQuantities[sku]) {
-        skuQuantities[sku] = 0;
+      // Group new units by SKU to update box stock
+      const skuQuantities: Record<string, number> = {};
+
+      // Calculate total quantity for each SKU
+      newUnits.forEach((unit) => {
+        const sku = unit.sku.toLowerCase();
+        if (!skuQuantities[sku]) {
+          skuQuantities[sku] = 0;
+        }
+        skuQuantities[sku] += unit.quantity;
+      });
+
+      // Update box stock for each SKU
+      for (const [sku, quantity] of Object.entries(skuQuantities)) {
+        await updateBoxStock(sku, quantity);
       }
-      skuQuantities[sku] += unit.quantity;
-    });
 
-    // Update box stock for each SKU
-    Object.entries(skuQuantities).forEach(([sku, quantity]) => {
-      updateBoxStock(sku, quantity);
-    });
-
-    return updatedStockUnits;
+      return updatedStockUnits;
+    } catch (error) {
+      console.error("Error saving stock units:", error);
+      return updatedStockUnits;
+    }
   };
 
   // Update an existing stock unit
-  const updateStockUnit = (
+  const updateStockUnit = async (
     updatedUnit: StockUnitItem,
     userName: string = "Warehouse Staff",
   ) => {
@@ -274,29 +290,43 @@ export function useStockUnits() {
     });
 
     setStockUnits(updatedStockUnits);
-    saveToLocalStorage("warehouse-stock-units", updatedStockUnits);
 
-    // If quantity decreased, update box stock
-    if (quantityDifference < 0) {
-      // When quantity decreases (outgoing stock), we need to update box stock
-      // The absolute value of the difference is passed to ensure proper calculation
-      updateBoxStock(updatedUnit.sku, Math.abs(quantityDifference));
-    } else if (quantityDifference > 0) {
-      // If quantity increased, also update box stock but with different logic
-      // This might happen when returning items or correcting inventory
-      updateBoxStock(updatedUnit.sku, quantityDifference);
+    try {
+      await saveToStorage("warehouse-stock-units", updatedStockUnits);
+
+      // If quantity decreased, update box stock
+      if (quantityDifference < 0) {
+        // When quantity decreases (outgoing stock), we need to update box stock
+        // The absolute value of the difference is passed to ensure proper calculation
+        await updateBoxStock(updatedUnit.sku, Math.abs(quantityDifference));
+      } else if (quantityDifference > 0) {
+        // If quantity increased, also update box stock but with different logic
+        // This might happen when returning items or correcting inventory
+        await updateBoxStock(updatedUnit.sku, quantityDifference);
+      }
+
+      return updatedStockUnits;
+    } catch (error) {
+      console.error("Error updating stock unit:", error);
+      return updatedStockUnits;
     }
-
-    return updatedStockUnits;
   };
 
   // Delete a stock unit
-  const deleteStockUnit = (unitId: string) => {
+  const deleteStockUnit = async (unitId: string) => {
     const unitToDelete = stockUnits.find((unit) => unit.id === unitId);
+    if (!unitToDelete) return stockUnits;
+
     const updatedStockUnits = stockUnits.filter((unit) => unit.id !== unitId);
     setStockUnits(updatedStockUnits);
-    saveToLocalStorage("warehouse-stock-units", updatedStockUnits);
-    return updatedStockUnits;
+
+    try {
+      await saveToStorage("warehouse-stock-units", updatedStockUnits);
+      return updatedStockUnits;
+    } catch (error) {
+      console.error("Error deleting stock unit:", error);
+      return updatedStockUnits;
+    }
   };
 
   // Group stock units by SKU for display

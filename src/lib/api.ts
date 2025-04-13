@@ -11,7 +11,7 @@ export async function fetchData<T>(
   table: string,
   options?: {
     columns?: string;
-    filters?: Record<string, any>;
+    filters?: Record<string, unknown>;
     order?: { column: string; ascending?: boolean };
     limit?: number;
     offset?: number;
@@ -22,7 +22,9 @@ export async function fetchData<T>(
   // Apply filters if provided
   if (options?.filters) {
     Object.entries(options.filters).forEach(([key, value]) => {
-      query = query.eq(key, value);
+      if (value !== undefined) {
+        query = query.eq(key, value);
+      }
     });
   }
 
@@ -58,7 +60,7 @@ export async function insertData<T>(
 ) {
   const { data: result, error } = await supabase
     .from(table)
-    .insert(data)
+    .insert(data as any)
     .select();
   return { data: result as T[], error };
 }
@@ -74,7 +76,7 @@ export async function updateData<T>(
 ) {
   const { data: result, error } = await supabase
     .from(table)
-    .update(data)
+    .update(data as any)
     .eq(idColumn, id)
     .select();
   return { data: result as T[], error };
@@ -98,15 +100,15 @@ export async function deleteData(
 export async function fetchDataWithFilters<T>(
   table: string,
   filters: {
-    eq?: Record<string, any>;
-    gt?: Record<string, any>;
-    lt?: Record<string, any>;
-    gte?: Record<string, any>;
-    lte?: Record<string, any>;
-    like?: Record<string, any>;
-    ilike?: Record<string, any>;
-    in?: Record<string, any[]>;
-    contains?: Record<string, any>;
+    eq?: Record<string, unknown>;
+    gt?: Record<string, unknown>;
+    lt?: Record<string, unknown>;
+    gte?: Record<string, unknown>;
+    lte?: Record<string, unknown>;
+    like?: Record<string, unknown>;
+    ilike?: Record<string, unknown>;
+    in?: Record<string, unknown[]>;
+    contains?: Record<string, unknown>;
   },
   options?: {
     columns?: string;
@@ -208,14 +210,16 @@ export async function fetchDataWithFilters<T>(
  */
 export async function countRecords(
   table: string,
-  filters?: Record<string, any>,
+  filters?: Record<string, unknown>,
 ) {
   let query = supabase.from(table).select("*", { count: "exact", head: true });
 
   // Apply filters if provided
   if (filters) {
     Object.entries(filters).forEach(([key, value]) => {
-      query = query.eq(key, value);
+      if (value !== undefined) {
+        query = query.eq(key, value);
+      }
     });
   }
 
@@ -231,7 +235,7 @@ export async function upsertData<T>(
   data: Partial<T> | Partial<T>[],
   onConflict?: string,
 ) {
-  let query = supabase.from(table).upsert(data);
+  let query = supabase.from(table).upsert(data as any);
 
   if (onConflict) {
     query = query.onConflict(onConflict);

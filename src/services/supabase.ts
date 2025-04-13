@@ -21,8 +21,9 @@ export const supabase =
 /**
  * Utility function to handle Supabase errors consistently
  */
-export const handleSupabaseError = (error: Error, context: string) => {
-  console.error(`Supabase error in ${context}:`, error.message);
+export const handleSupabaseError = (error: unknown, context: string) => {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  console.error(`Supabase error in ${context}:`, errorMessage);
   // In production, you might want to log to a service like Sentry
   return error;
 };
@@ -73,7 +74,7 @@ export const checkSupabaseConnection = async (): Promise<{
 
     // Try to access the health_check table
     const { data: healthData, error: healthError } = await supabase
-      .from("health_check" as any)
+      .from("health_check")
       .select("*")
       .limit(1);
 
@@ -95,9 +96,8 @@ export const checkSupabaseConnection = async (): Promise<{
 
     // Try to get a list of available tables
     try {
-      const { data: tablesData, error: tablesError } = await supabase.rpc(
-        "get_tables" as any,
-      );
+      const { data: tablesData, error: tablesError } =
+        await supabase.rpc("get_tables");
 
       if (tablesError) {
         console.warn("Could not retrieve table list:", tablesError);
@@ -192,7 +192,7 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
       updatedAt: profile.updated_at || new Date().toISOString(),
     };
   } catch (error) {
-    handleSupabaseError(error as Error, "getCurrentUser");
+    handleSupabaseError(error, "getCurrentUser");
     return null;
   }
 };
@@ -223,7 +223,7 @@ export const signInWithEmail = async (email: string, password: string) => {
     if (error) throw error;
     return data;
   } catch (error) {
-    handleSupabaseError(error as Error, "signInWithEmail");
+    handleSupabaseError(error, "signInWithEmail");
     return { error };
   }
 };
@@ -294,7 +294,7 @@ export const signUpWithEmail = async (
 
     return data;
   } catch (error) {
-    handleSupabaseError(error as Error, "signUpWithEmail");
+    handleSupabaseError(error, "signUpWithEmail");
     throw error;
   }
 };
@@ -334,7 +334,7 @@ export const updateUserProfile = async (
     if (error) throw error;
     return true;
   } catch (error) {
-    handleSupabaseError(error as Error, "updateUserProfile");
+    handleSupabaseError(error, "updateUserProfile");
     throw error;
   }
 };
@@ -373,7 +373,7 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
       updatedAt: profile.updated_at || new Date().toISOString(),
     }));
   } catch (error) {
-    handleSupabaseError(error as Error, "getAllUsers");
+    handleSupabaseError(error, "getAllUsers");
     return [];
   }
 };
@@ -411,7 +411,7 @@ export const signOut = async () => {
 
     return true;
   } catch (error) {
-    handleSupabaseError(error as Error, "signOut");
+    handleSupabaseError(error, "signOut");
     throw error;
   }
 };
@@ -427,7 +427,7 @@ export const hasPermission = async (
     if (!user) return false;
     return user.permissions[permission] || false;
   } catch (error) {
-    handleSupabaseError(error as Error, "hasPermission");
+    handleSupabaseError(error, "hasPermission");
     return false;
   }
 };

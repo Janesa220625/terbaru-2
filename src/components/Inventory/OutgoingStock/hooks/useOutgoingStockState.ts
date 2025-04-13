@@ -71,8 +71,11 @@ export const useOutgoingStockState = () => {
   const [processingUpload, setProcessingUpload] = useState(false);
 
   // New outgoing document form state
+  // Define document number generation before using it
+  const documentNumber = `AKS-${format(new Date(), "yyyyMMdd")}-${Math.floor(1000 + Math.random() * 9000)}`;
+
   const [newOutgoingDocument, setNewOutgoingDocument] = useState({
-    documentNumber: generateDocumentNumber(),
+    documentNumber: documentNumber,
     date: format(new Date(), "yyyy-MM-dd"),
     time: format(new Date(), "HH:mm:ss"),
     recipientId: "",
@@ -100,9 +103,9 @@ export const useOutgoingStockState = () => {
   const { stockUnits } = useStockUnits();
 
   // Function to generate a new document number
-  const generateDocumentNumber = () => {
+  function generateDocumentNumber() {
     return `AKS-${format(new Date(), "yyyyMMdd")}-${Math.floor(1000 + Math.random() * 9000)}`;
-  };
+  }
 
   // Calculate aggregated stock from stockUnits
   useEffect(() => {
