@@ -93,15 +93,18 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
       };
     }
 
+    // Ensure role is a valid UserRole
+    const userRole: UserRole = (profile.role as UserRole) || "viewer";
+
     // Combine auth user and profile data
     return {
       id: user.id,
       email: user.email || "",
-      role: (profile.role as UserRole) || "viewer",
+      role: userRole,
       firstName: profile.first_name || undefined,
       lastName: profile.last_name || undefined,
       warehouseId: profile.warehouse_id || undefined,
-      permissions: DEFAULT_PERMISSIONS[(profile.role as UserRole) || "viewer"],
+      permissions: DEFAULT_PERMISSIONS[userRole],
       createdAt:
         profile.created_at || user.created_at || new Date().toISOString(),
       updatedAt: profile.updated_at || new Date().toISOString(),
@@ -250,17 +253,22 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
     if (error) throw error;
 
     // Map to UserProfile format
-    return (data || []).map((profile) => ({
-      id: profile.id,
-      email: profile.email || "",
-      role: (profile.role as UserRole) || "viewer",
-      firstName: profile.first_name || undefined,
-      lastName: profile.last_name || undefined,
-      warehouseId: profile.warehouse_id || undefined,
-      permissions: DEFAULT_PERMISSIONS[(profile.role as UserRole) || "viewer"],
-      createdAt: profile.created_at || new Date().toISOString(),
-      updatedAt: profile.updated_at || new Date().toISOString(),
-    }));
+    return (data || []).map((profile) => {
+      // Ensure role is a valid UserRole
+      const userRole: UserRole = (profile.role as UserRole) || "viewer";
+
+      return {
+        id: profile.id,
+        email: profile.email || "",
+        role: userRole,
+        firstName: profile.first_name || undefined,
+        lastName: profile.last_name || undefined,
+        warehouseId: profile.warehouse_id || undefined,
+        permissions: DEFAULT_PERMISSIONS[userRole],
+        createdAt: profile.created_at || new Date().toISOString(),
+        updatedAt: profile.updated_at || new Date().toISOString(),
+      };
+    });
   } catch (error) {
     handleSupabaseError(error as Error, "getAllUsers");
     return [];

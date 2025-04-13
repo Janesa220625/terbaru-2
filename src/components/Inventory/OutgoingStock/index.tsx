@@ -36,6 +36,7 @@ import SelectedStockItems from "./SelectedStockItems";
 import DeliveryInfoForm from "./DeliveryInfoForm";
 import { useOutgoingStockState } from "./hooks/useOutgoingStockState";
 import { saveToLocalStorage } from "@/lib/storage";
+import QuickAddRecipientForm from "./QuickAddRecipientForm";
 
 const OutgoingStock = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -826,7 +827,17 @@ const OutgoingStock = () => {
               Add New Recipient
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">{/* Quick add recipient form */}</div>
+          <div className="space-y-4 py-4">
+            <QuickAddRecipientForm
+              form={quickAddRecipientForm}
+              onFormChange={(field, value) => {
+                setQuickAddRecipientForm({
+                  ...quickAddRecipientForm,
+                  [field]: value,
+                });
+              }}
+            />
+          </div>
           <DialogFooter>
             <Button
               variant="outline"

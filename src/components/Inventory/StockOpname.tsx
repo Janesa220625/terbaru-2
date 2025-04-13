@@ -70,50 +70,52 @@ const StockOpname = () => {
   const [opnameHistory, setOpnameHistory] = useState<StockOpnameItem[]>([]);
 
   useEffect(() => {
+    const defaultHistory: StockOpnameItem[] = [
+      {
+        id: "1",
+        date: "2023-06-15",
+        status: "completed",
+        totalItems: 120,
+        matchedItems: 120,
+        discrepancies: 0,
+        warehouse: "main",
+        adjustmentApplied: true,
+      },
+      {
+        id: "2",
+        date: "2023-05-01",
+        status: "discrepancy",
+        totalItems: 115,
+        matchedItems: 112,
+        discrepancies: 3,
+        warehouse: "secondary",
+        adjustmentApplied: true,
+      },
+      {
+        id: "3",
+        date: "2023-04-01",
+        status: "completed",
+        totalItems: 105,
+        matchedItems: 105,
+        discrepancies: 0,
+        warehouse: "main",
+        adjustmentApplied: true,
+      },
+      {
+        id: "4",
+        date: "2023-03-01",
+        status: "discrepancy",
+        totalItems: 98,
+        matchedItems: 95,
+        discrepancies: 3,
+        warehouse: "outlet",
+        adjustmentApplied: false,
+      },
+    ];
+
     const savedOpnameHistory = loadFromLocalStorage<StockOpnameItem[]>(
       "warehouse-opname-history",
-      [
-        {
-          id: "1",
-          date: "2023-06-15",
-          status: "completed",
-          totalItems: 120,
-          matchedItems: 120,
-          discrepancies: 0,
-          warehouse: "main",
-          adjustmentApplied: true,
-        },
-        {
-          id: "2",
-          date: "2023-05-01",
-          status: "discrepancy",
-          totalItems: 115,
-          matchedItems: 112,
-          discrepancies: 3,
-          warehouse: "secondary",
-          adjustmentApplied: true,
-        },
-        {
-          id: "3",
-          date: "2023-04-01",
-          status: "completed",
-          totalItems: 105,
-          matchedItems: 105,
-          discrepancies: 0,
-          warehouse: "main",
-          adjustmentApplied: true,
-        },
-        {
-          id: "4",
-          date: "2023-03-01",
-          status: "discrepancy",
-          totalItems: 98,
-          matchedItems: 95,
-          discrepancies: 3,
-          warehouse: "outlet",
-          adjustmentApplied: false,
-        },
-      ],
+      defaultHistory,
     );
     setOpnameHistory(savedOpnameHistory);
   }, []);
@@ -257,7 +259,7 @@ const StockOpname = () => {
     const newHistoryItem: StockOpnameItem = {
       id: newStockCount.id,
       date: newStockCount.date,
-      status: "pending" as "pending",
+      status: "pending", // Removed redundant type assertion
       totalItems: products.length,
       matchedItems: 0,
       discrepancies: 0,
@@ -265,7 +267,10 @@ const StockOpname = () => {
       adjustmentApplied: false,
     };
 
-    const updatedHistory = [newHistoryItem, ...opnameHistory];
+    const updatedHistory: StockOpnameItem[] = [
+      newHistoryItem,
+      ...opnameHistory,
+    ];
     setOpnameHistory(updatedHistory);
     saveToLocalStorage("warehouse-opname-history", updatedHistory);
 
@@ -307,14 +312,14 @@ const StockOpname = () => {
     });
 
     // Update history item
-    const updatedHistory = opnameHistory.map((item) => {
+    const updatedHistory: StockOpnameItem[] = opnameHistory.map((item) => {
       if (item.id === activeStockCount.id) {
         return {
           ...item,
           status: discrepancies > 0 ? "discrepancy" : "completed",
           matchedItems: matches,
           discrepancies: discrepancies,
-        } as StockOpnameItem;
+        };
       }
       return item;
     });

@@ -57,7 +57,7 @@ export async function fetchData<T>(
  */
 export async function insertData<T>(
   table: TableNames,
-  data: any, // Using any temporarily to fix type issues
+  data: Record<string, unknown> | Record<string, unknown>[], // More specific type than any
 ) {
   const { data: result, error } = await supabase
     .from(table)
@@ -72,7 +72,7 @@ export async function insertData<T>(
 export async function updateData<T>(
   table: TableNames,
   id: string | number,
-  data: any, // Using any temporarily to fix type issues
+  data: Record<string, unknown>, // More specific type than any
   idColumn = "id",
 ) {
   const { data: result, error } = await supabase
@@ -233,13 +233,15 @@ export async function countRecords(
  */
 export async function upsertData<T>(
   table: TableNames,
-  data: any, // Using any temporarily to fix type issues
+  data: Record<string, unknown> | Record<string, unknown>[], // More specific type than any
   onConflict?: string,
 ) {
-  const query = supabase.from(table).upsert(data);
+  let query = supabase.from(table).upsert(data);
 
-  // Note: onConflict is handled differently in newer Supabase versions
-  // This is a workaround for type issues
+  if (onConflict) {
+    query = query.onConflict(onConflict);
+  }
+
   const { data: result, error } = await query.select();
   return { data: result as T[] | null, error };
 }

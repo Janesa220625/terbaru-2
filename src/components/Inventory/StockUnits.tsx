@@ -392,4 +392,41 @@ const StockUnits = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsU
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const result = await parseExcelTemplate(file, products);
+      setValidationResults(result);
+      setShowValidation(true);
+
+      // If there are valid items, add them to stock
+      if (result.validItems.length > 0) {
+        const stockItems = result.validItems
+          .filter((item) => item.isValid)
+          .map((item) => ({
+            sku: item.sku,
+            size: item.size,
+            color: item.color,
+            quantity: item.quantity,
+            boxId: "",
+            dateAdded: new Date(),
+            addedBy: newUnit.addedBy || "System Import",
+            manufactureDate: undefined,
+          }));
+
+        addStockUnits(stockItems as any[]);
+      }
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "Unknown error occurred",
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white p-4">{/* Component JSX would go here */}</div>
+  );
+};
