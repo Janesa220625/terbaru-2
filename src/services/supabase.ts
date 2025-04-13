@@ -192,14 +192,17 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
     return {
       id: user.id,
       email: user.email || "",
-      role: (profile.role as UserRole) || "viewer",
-      firstName: profile.first_name || undefined,
-      lastName: profile.last_name || undefined,
-      warehouseId: profile.warehouse_id || undefined,
-      permissions: DEFAULT_PERMISSIONS[(profile.role as UserRole) || "viewer"],
+      role: ((profile as any).role as UserRole) || "viewer",
+      firstName: (profile as any).first_name || undefined,
+      lastName: (profile as any).last_name || undefined,
+      warehouseId: (profile as any).warehouse_id || undefined,
+      permissions:
+        DEFAULT_PERMISSIONS[((profile as any).role as UserRole) || "viewer"],
       createdAt:
-        profile.created_at || user.created_at || new Date().toISOString(),
-      updatedAt: profile.updated_at || new Date().toISOString(),
+        (profile as any).created_at ||
+        user.created_at ||
+        new Date().toISOString(),
+      updatedAt: (profile as any).updated_at || new Date().toISOString(),
     };
   } catch (error) {
     handleSupabaseError(error, "getCurrentUser");
@@ -378,15 +381,16 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
 
     // Map to UserProfile format
     return (data || []).map((profile) => ({
-      id: profile.id,
-      email: profile.email || "",
-      role: (profile.role as UserRole) || "viewer",
-      firstName: profile.first_name || undefined,
-      lastName: profile.last_name || undefined,
-      warehouseId: profile.warehouse_id || undefined,
-      permissions: DEFAULT_PERMISSIONS[(profile.role as UserRole) || "viewer"],
-      createdAt: profile.created_at || new Date().toISOString(),
-      updatedAt: profile.updated_at || new Date().toISOString(),
+      id: (profile as any).id,
+      email: (profile as any).email || "",
+      role: ((profile as any).role as UserRole) || "viewer",
+      firstName: (profile as any).first_name || undefined,
+      lastName: (profile as any).last_name || undefined,
+      warehouseId: (profile as any).warehouse_id || undefined,
+      permissions:
+        DEFAULT_PERMISSIONS[((profile as any).role as UserRole) || "viewer"],
+      createdAt: (profile as any).created_at || new Date().toISOString(),
+      updatedAt: (profile as any).updated_at || new Date().toISOString(),
     }));
   } catch (error) {
     handleSupabaseError(error, "getAllUsers");
