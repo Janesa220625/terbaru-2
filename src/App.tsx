@@ -9,8 +9,14 @@ import {
   useLocation,
 } from "react-router-dom";
 import Home from "./components/home";
-// @ts-ignore
-import routes from "tempo-routes";
+// Import tempo routes safely with error handling
+let routes = [];
+try {
+  // @ts-ignore
+  routes = import.meta.env.DEV ? require("tempo-routes").default : [];
+} catch (error) {
+  console.warn("Tempo routes not available, this is expected in production");
+}
 import MainLayout from "./components/Layout/MainLayout";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import LoginForm from "./components/Auth/LoginForm";
@@ -162,9 +168,16 @@ function AppRoutes() {
               }
             />
           </Route>
+          {/* Add tempobook route to prevent 404 in production */}
+          {import.meta.env.VITE_TEMPO === "true" && (
+            <Route path="/tempobook/*" element={<div />} />
+          )}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+        {/* Only use tempo routes in development */}
+        {import.meta.env.DEV &&
+          import.meta.env.VITE_TEMPO === "true" &&
+          useRoutes(routes)}
       </>
     </Suspense>
   );

@@ -80,7 +80,7 @@ export default defineConfig(({ mode }) => {
       minify: "terser",
       terserOptions: {
         compress: {
-          drop_console: mode === "production",
+          drop_console: mode === "production" ? false : false, // Keep console.warn for debugging
           drop_debugger: mode === "production",
           pure_funcs:
             mode === "production"
