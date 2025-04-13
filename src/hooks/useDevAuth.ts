@@ -63,7 +63,7 @@ export const useDevAuth = (options?: { role?: UserRole }) => {
               `Trying direct auth with ${cred.email} (${cred.role})...`,
             );
             const result = await signInWithEmail(cred.email, cred.password);
-            if (!result.error) {
+            if (!("error" in result) || !result.error) {
               console.log(
                 `🔓 DEV MODE: Direct auth successful with role: ${cred.role}!`,
               );

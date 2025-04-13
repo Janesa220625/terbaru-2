@@ -23,7 +23,7 @@ export const migrateLocalStorageToSupabase = async (): Promise<{
     // Verify Supabase connection before proceeding
     console.log("Verifying Supabase connection before migration...");
     const { data: healthCheck, error: healthError } = await supabase
-      .from("health_check")
+      .from("health_check" as any)
       .select("*")
       .limit(1);
 
@@ -109,7 +109,7 @@ async function migrateMockUsers(): Promise<boolean> {
 
     // Test Supabase connection first
     const { data: healthCheck, error: healthError } = await supabase
-      .from("health_check")
+      .from("health_check" as any)
       .select("*")
       .limit(1);
 

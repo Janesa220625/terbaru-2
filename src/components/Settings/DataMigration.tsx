@@ -22,6 +22,7 @@ import {
   migrateLocalStorageToSupabase,
   checkDataConsistency,
 } from "@/lib/migration";
+import { checkSupabaseConnection } from "@/services/supabase";
 
 export default function DataMigration() {
   const [isMigrating, setIsMigrating] = useState(false);
@@ -64,7 +65,6 @@ export default function DataMigration() {
       const result = await migrateLocalStorageToSupabase();
       setMigrationResult({
         ...result,
-        connectionDetails: connectionStatus.details,
       });
 
       // Log the result for debugging

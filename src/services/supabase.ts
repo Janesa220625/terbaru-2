@@ -41,7 +41,13 @@ export const checkSupabaseConnection = async (): Promise<{
     timestamp: string;
   };
 }> => {
-  const details = {
+  const details: {
+    credentialsPresent: boolean;
+    healthCheckTableExists: boolean;
+    timestamp: string;
+    error?: string;
+    tablesAvailable?: string[];
+  } = {
     credentialsPresent: false,
     healthCheckTableExists: false,
     timestamp: new Date().toISOString(),
@@ -67,7 +73,7 @@ export const checkSupabaseConnection = async (): Promise<{
 
     // Try to access the health_check table
     const { data: healthData, error: healthError } = await supabase
-      .from("health_check")
+      .from("health_check" as any)
       .select("*")
       .limit(1);
 
@@ -89,8 +95,9 @@ export const checkSupabaseConnection = async (): Promise<{
 
     // Try to get a list of available tables
     try {
-      const { data: tablesData, error: tablesError } =
-        await supabase.rpc("get_tables");
+      const { data: tablesData, error: tablesError } = await supabase.rpc(
+        "get_tables" as any,
+      );
 
       if (tablesError) {
         console.warn("Could not retrieve table list:", tablesError);
@@ -176,9 +183,9 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
       id: user.id,
       email: user.email || "",
       role: (profile.role as UserRole) || "viewer",
-      firstName: profile.first_name,
-      lastName: profile.last_name,
-      warehouseId: profile.warehouse_id,
+      firstName: profile.first_name || undefined,
+      lastName: profile.last_name || undefined,
+      warehouseId: profile.warehouse_id || undefined,
       permissions: DEFAULT_PERMISSIONS[(profile.role as UserRole) || "viewer"],
       createdAt:
         profile.created_at || user.created_at || new Date().toISOString(),
@@ -358,9 +365,9 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
       id: profile.id,
       email: profile.email || "",
       role: (profile.role as UserRole) || "viewer",
-      firstName: profile.first_name,
-      lastName: profile.last_name,
-      warehouseId: profile.warehouse_id,
+      firstName: profile.first_name || undefined,
+      lastName: profile.last_name || undefined,
+      warehouseId: profile.warehouse_id || undefined,
       permissions: DEFAULT_PERMISSIONS[(profile.role as UserRole) || "viewer"],
       createdAt: profile.created_at || new Date().toISOString(),
       updatedAt: profile.updated_at || new Date().toISOString(),
