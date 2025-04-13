@@ -76,7 +76,7 @@ export const checkSupabaseConnection = async (): Promise<{
     // Try to access the health_check table
     // Use explicit typing for the health_check table
     const { data: healthData, error: healthError } = await supabase
-      .from("health_check")
+      .from("health_check" as any)
       .select("*")
       .limit(1);
 
@@ -101,13 +101,13 @@ export const checkSupabaseConnection = async (): Promise<{
       // Explicitly type the RPC function call
       const { data: tablesData, error: tablesError } = await supabase.rpc(
         "get_tables" as any,
-        {},
+        {} as any,
       );
 
       if (tablesError) {
         console.warn("Could not retrieve table list:", tablesError);
       } else if (tablesData) {
-        details.tablesAvailable = tablesData;
+        details.tablesAvailable = tablesData as any;
         console.log("Available tables:", tablesData);
       }
     } catch (tablesError) {
@@ -145,7 +145,7 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
     // Fetch user profile from profiles table
     // Use explicit type for the profiles table
     const { data: profile, error } = await supabase
-      .from("profiles")
+      .from("profiles" as any)
       .select("*")
       .eq("id", user.id)
       .single();
@@ -169,7 +169,7 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
         updated_at: new Date().toISOString(),
       };
       const { error: createError } = await supabase
-        .from("profiles")
+        .from("profiles" as any)
         .insert(profileData);
 
       if (createError) {
@@ -297,7 +297,7 @@ export const signUpWithEmail = async (
       updated_at: new Date().toISOString(),
     };
     const { error: profileError } = await supabase
-      .from("profiles")
+      .from("profiles" as any)
       .insert(profileData);
 
     if (profileError) {
@@ -343,7 +343,7 @@ export const updateUserProfile = async (
       updated_at: new Date().toISOString(),
     };
     const { error } = await supabase
-      .from("profiles")
+      .from("profiles" as any)
       .update(profileUpdate)
       .eq("id", userId);
 
@@ -372,7 +372,7 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
     }
 
     // Get all users from profiles table
-    const { data, error } = await supabase.from("profiles").select("*");
+    const { data, error } = await supabase.from("profiles" as any).select("*");
 
     if (error) throw error;
 

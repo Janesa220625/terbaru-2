@@ -241,11 +241,9 @@ export async function upsertData<T>(
   data: Record<string, unknown> | Record<string, unknown>[], // More specific type than any
   onConflict?: string,
 ) {
-  let query = supabase.from(table as any).upsert(data as any);
-
-  if (onConflict) {
-    query = query.onConflict(onConflict);
-  }
+  let query = supabase
+    .from(table as any)
+    .upsert(data as any, { onConflict: onConflict });
 
   const { data: result, error } = await query.select();
   return { data: result as T[] | null, error };

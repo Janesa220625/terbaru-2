@@ -152,12 +152,12 @@ const BatchOperations = () => {
                 ...mergedBoxStock[existingIndex],
                 ...newItem,
                 id: mergedBoxStock[existingIndex].id, // Preserve original ID
-              };
+              } as any;
             } else {
               mergedBoxStock.push({
                 ...newItem,
                 id: `box-${Date.now()}-${Math.floor(Math.random() * 1000)}`, // Generate new ID
-              });
+              } as any);
             }
           });
 
