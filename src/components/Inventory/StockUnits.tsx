@@ -425,7 +425,6 @@ const StockUnits = () => {
       setIsUploading(false);
     }
   };
-  };
 
   return (
     <div className="bg-white p-4">{/* Component JSX would go here */}</div>
