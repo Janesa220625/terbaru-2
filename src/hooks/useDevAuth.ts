@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "./useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { signInWithEmail } from "@/services/supabase";
 import type { UserRole } from "../types/auth";
 
