@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState } from "react";
 import {
   Card,
   CardContent,
@@ -31,8 +31,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, subDays, isWithinInterval, parseISO } from "date-fns";
-import { loadFromLocalStorage } from "@/lib/storage";
+import { format, subDays } from "date-fns";
 import {
   Calendar as CalendarIcon,
   RefreshCw,
@@ -50,41 +49,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
+import { useShippingData } from "@/hooks/useShippingData";
 
 interface ShippingAnalysisProps {
   className?: string;
-}
-
-interface OutgoingStockItem {
-  id: string;
-  sku: string;
-  name: string;
-  color: string;
-  size: string;
-  quantity: number;
-}
-
-interface OutgoingStockDocument {
-  id: string;
-  documentNumber: string;
-  date: string;
-  time?: string;
-  recipientId?: string;
-  recipient: string;
-  notes: string;
-  items: OutgoingStockItem[];
-  totalItems: number;
-}
-
-interface ProductShipmentData {
-  recipient: string;
-  recipientId?: string;
-  product: string;
-  sku: string;
-  totalPairs: number;
-  shipmentCount: number;
-  lastShipmentDate: string;
-  documents: string[];
 }
 
 const ShippingAnalysis: React.FC<ShippingAnalysisProps> = ({ className }) => {
@@ -95,62 +63,21 @@ const ShippingAnalysis: React.FC<ShippingAnalysisProps> = ({ className }) => {
   const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 30));
   const [endDate, setEndDate] = useState<Date>(new Date());
 
-  // State for data
-  const [outgoingDocuments, setOutgoingDocuments] = useState<
-    OutgoingStockDocument[]
-  >([]);
-  const [products, setProducts] = useState<string[]>([]);
-  const [recipients, setRecipients] = useState<string[]>([]);
-  const [shipmentData, setShipmentData] = useState<ProductShipmentData[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  // Load initial data
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  // Recalculate shipment data when filters change
-  useEffect(() => {
-    aggregateShipmentData();
-  }, [
-    outgoingDocuments,
+  // Use the custom hook to handle data fetching and transformation
+  const {
+    isLoading,
+    products,
+    recipients,
+    shipmentData,
+    loadData,
+    getBadgeColor,
+  } = useShippingData({
     productFilter,
     recipientFilter,
+    searchTerm,
     startDate,
     endDate,
-    searchTerm,
-  ]);
-
-  const loadData = () => {
-    setIsLoading(true);
-    try {
-      // Load outgoing documents from localStorage
-      const savedOutgoingDocuments = loadFromLocalStorage<
-        OutgoingStockDocument[]
-      >("warehouse-outgoing-documents", []);
-      setOutgoingDocuments(savedOutgoingDocuments);
-
-      // Extract unique products and recipients
-      const uniqueProducts = new Set<string>();
-      const uniqueRecipients = new Set<string>();
-
-      savedOutgoingDocuments.forEach((doc) => {
-        uniqueRecipients.add(doc.recipient);
-        doc.items.forEach((item) => {
-          // Use the product name or extract from SKU if name is not available
-          const productName = item.name || item.sku.split("-")[0];
-          uniqueProducts.add(productName);
-        });
-      });
-
-      setProducts(Array.from(uniqueProducts).sort());
-      setRecipients(Array.from(uniqueRecipients).sort());
-    } catch (error) {
-      console.error("Error loading shipping analysis data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  });
 
   // Export data to Excel
   const exportToExcel = () => {
@@ -176,101 +103,6 @@ const ShippingAnalysis: React.FC<ShippingAnalysisProps> = ({ className }) => {
     // Save the file
     const fileName = `product-shipment-analysis-${format(new Date(), "yyyy-MM-dd")}.xlsx`;
     saveAs(data, fileName);
-  };
-
-  // Aggregate shipment data based on filters
-  const aggregateShipmentData = () => {
-    if (outgoingDocuments.length === 0) {
-      setShipmentData([]);
-      return;
-    }
-
-    // Filter documents by date range
-    const filteredByDate = outgoingDocuments.filter((doc) => {
-      const docDate = new Date(doc.date);
-      return isWithinInterval(docDate, { start: startDate, end: endDate });
-    });
-
-    // Create a map to aggregate data
-    const aggregatedData: Record<string, ProductShipmentData> = {};
-
-    filteredByDate.forEach((doc) => {
-      // Skip if recipient filter is set and doesn't match
-      if (recipientFilter && doc.recipient !== recipientFilter) {
-        return;
-      }
-
-      doc.items.forEach((item) => {
-        // Extract product name from item
-        const productName = item.name || item.sku.split("-")[0];
-
-        // Skip if product filter is set and doesn't match
-        if (productFilter && productName !== productFilter) {
-          return;
-        }
-
-        // Create a unique key for each product-recipient combination
-        const key = `${doc.recipient}|${productName}|${item.sku}`;
-
-        if (!aggregatedData[key]) {
-          aggregatedData[key] = {
-            recipient: doc.recipient,
-            recipientId: doc.recipientId,
-            product: productName,
-            sku: item.sku,
-            totalPairs: 0,
-            shipmentCount: 0,
-            lastShipmentDate: doc.date,
-            documents: [],
-          };
-        }
-
-        // Add the quantity to the total
-        aggregatedData[key].totalPairs += item.quantity;
-
-        // Track unique shipments by document ID
-        if (!aggregatedData[key].documents.includes(doc.id)) {
-          aggregatedData[key].documents.push(doc.id);
-          aggregatedData[key].shipmentCount += 1;
-        }
-
-        // Update last shipment date if this document is newer
-        const currentLastDate = new Date(aggregatedData[key].lastShipmentDate);
-        const docDate = new Date(doc.date);
-        if (docDate > currentLastDate) {
-          aggregatedData[key].lastShipmentDate = doc.date;
-        }
-      });
-    });
-
-    // Apply search filter
-    let result = Object.values(aggregatedData);
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      result = result.filter(
-        (item) =>
-          item.recipient.toLowerCase().includes(searchLower) ||
-          item.product.toLowerCase().includes(searchLower) ||
-          item.sku.toLowerCase().includes(searchLower),
-      );
-    }
-
-    // Sort by recipient and then by product
-    result.sort((a, b) => {
-      if (a.recipient !== b.recipient) {
-        return a.recipient.localeCompare(b.recipient);
-      }
-      return a.product.localeCompare(b.product);
-    });
-
-    setShipmentData(result);
-  };
-
-  // Get badge color based on quantity
-  const getBadgeColor = (quantity: number) => {
-    if (quantity > 30) return "bg-green-100 text-green-800";
-    if (quantity > 10) return "bg-yellow-100 text-yellow-800";
-    return "bg-red-100 text-red-800";
   };
 
   return (

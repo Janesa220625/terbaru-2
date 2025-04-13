@@ -1,12 +1,18 @@
 import React, { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import RoleManagement from "@/components/settings/RoleManagement";
-import AccessSettings from "@/components/settings/AccessSettings";
-import LanguageSettings from "@/components/settings/LanguageSettings";
-import { Input } from "@/components/ui/input";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/tabs";
+import RoleManagement from "../components/settings/RoleManagement";
+import AccessSettings from "../components/settings/AccessSettings";
+import LanguageSettings from "../components/settings/LanguageSettings";
+import { Input } from "../components/ui/input";
 import { Search } from "lucide-react";
-import UserManagement from "@/components/settings/UserManagement";
-import AuthWrapper from "@/components/Auth/AuthWrapper";
+import UserManagement from "../components/settings/UserManagement";
+import AuthWrapper from "../components/Auth/AuthWrapper";
+import DataMigration from "../components/Settings/DataMigration";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("users");
@@ -37,11 +43,12 @@ const Settings = () => {
         onValueChange={setActiveTab}
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="roles">Role Management</TabsTrigger>
           <TabsTrigger value="access">Access Settings</TabsTrigger>
           <TabsTrigger value="language">Language Settings</TabsTrigger>
+          <TabsTrigger value="data">Data Migration</TabsTrigger>
         </TabsList>
 
         <div className="mt-6">
@@ -66,6 +73,12 @@ const Settings = () => {
           <TabsContent value="language">
             <AuthWrapper requiredPermission="canManageSettings">
               <LanguageSettings />
+            </AuthWrapper>
+          </TabsContent>
+
+          <TabsContent value="data">
+            <AuthWrapper requiredPermission="canManageSettings">
+              <DataMigration />
             </AuthWrapper>
           </TabsContent>
         </div>

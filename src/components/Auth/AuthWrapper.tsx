@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import type { UserProfile } from "@/types/auth";
+import { useAuth } from "../../hooks/useAuth";
+import type { UserProfile } from "../../types/auth";
 import { Loader2, ShieldAlert } from "lucide-react";
 
 interface AuthWrapperProps {

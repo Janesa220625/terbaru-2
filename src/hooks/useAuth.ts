@@ -1,5 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
-import { supabase } from "@/services/supabase";
+import { supabase } from "../lib/supabase";
 import {
   getCurrentUser,
   signInWithEmail,
@@ -7,8 +7,9 @@ import {
   signOut,
   hasPermission,
   updateUserProfile,
-} from "@/services/supabase";
-import type { UserProfile, UserRole, UserPermissions } from "@/types/auth";
+} from "../lib/auth";
+import type { UserProfile, UserRole, UserPermissions } from "../types/auth";
+import { saveToStorage, loadFromStorage } from "../lib/storage";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -70,13 +71,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         setIsLoading(true);
 
-        // Check for a mock user in localStorage (for development)
+        // Check for a mock user in Supabase storage (for development)
         if (import.meta.env.DEV) {
-          const mockUserJson = localStorage.getItem("warehouse-user");
-          if (mockUserJson) {
-            const mockUser = JSON.parse(mockUserJson);
+          const { data: mockUser, error: loadError } = await loadFromStorage(
+            "dev-storage/mock-user.json",
+            null,
+          );
+
+          if (mockUser && !loadError) {
             console.log(
-              "DEV MODE: Using mock user from localStorage",
+              "DEV MODE: Using mock user from Supabase storage",
               mockUser,
             );
             setUser(mockUser);
@@ -117,7 +121,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             updatedAt: new Date().toISOString(),
           };
           setUser(mockUser);
-          localStorage.setItem("warehouse-user", JSON.stringify(mockUser));
+          // Save mock user to Supabase storage instead of localStorage
+          await saveToStorage("dev-storage/mock-user.json", mockUser);
         }
       } finally {
         setIsLoading(false);
@@ -217,7 +222,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Clear session data first
       sessionStorage.removeItem("warehouse-user-session");
       sessionStorage.removeItem("warehouse-login-timestamp");
-      localStorage.removeItem("warehouse-user-cache");
+      // Remove user cache from Supabase storage instead of localStorage
+      await saveToStorage("user-cache/user-data.json", null);
 
       await signOut();
       setUser(null);

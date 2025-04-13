@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/tabs";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "../components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,11 +26,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import ProductList, { Product } from "@/components/Products/ProductList";
-import ProductForm from "@/components/Products/ProductForm";
+} from "../components/ui/alert-dialog";
+import ProductList, { Product } from "../components/Products/ProductList";
+import ProductForm from "../components/Products/ProductForm";
 import { v4 as uuidv4 } from "uuid";
-import { loadFromLocalStorage, saveToLocalStorage } from "@/lib/storage";
+import { loadFromStorage, saveToStorage } from "../lib/storage";
 
 // Default products data
 const defaultProducts: Product[] = [
@@ -79,28 +89,54 @@ const Products = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
 
-  // Load products from localStorage on component mount
+  // Load products from Supabase storage on component mount
   useEffect(() => {
-    const savedProducts = loadFromLocalStorage<Product[]>(
-      "warehouse-products",
-      defaultProducts,
-    );
-    // Ensure products is always an array
-    setProducts(Array.isArray(savedProducts) ? savedProducts : defaultProducts);
+    const fetchProducts = async () => {
+      try {
+        const { data: savedProducts, error } = await loadFromStorage<Product[]>(
+          "products/catalog.json",
+          defaultProducts,
+        );
+
+        if (error) {
+          console.error("Error loading products:", error);
+          setProducts(defaultProducts);
+        } else {
+          // Ensure products is always an array
+          setProducts(
+            Array.isArray(savedProducts) ? savedProducts : defaultProducts,
+          );
+        }
+      } catch (err) {
+        console.error("Failed to load products:", err);
+        setProducts(defaultProducts);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
-  const handleAddProduct = (formData: Omit<Product, "id">) => {
+  const handleAddProduct = async (formData: Omit<Product, "id">) => {
     const newProduct = {
       id: uuidv4(),
       ...formData,
     };
     const updatedProducts = [...products, newProduct];
     setProducts(updatedProducts);
-    saveToLocalStorage("warehouse-products", updatedProducts);
+
+    // Save to Supabase storage instead of localStorage
+    const { error } = await saveToStorage(
+      "products/catalog.json",
+      updatedProducts,
+    );
+    if (error) {
+      console.error("Error saving products:", error);
+    }
+
     setIsAddDialogOpen(false);
   };
 
-  const handleEditProduct = (formData: Omit<Product, "id">) => {
+  const handleEditProduct = async (formData: Omit<Product, "id">) => {
     if (!currentProduct) return;
 
     const updatedProducts = products.map((product) =>
@@ -108,12 +144,21 @@ const Products = () => {
     );
 
     setProducts(updatedProducts);
-    saveToLocalStorage("warehouse-products", updatedProducts);
+
+    // Save to Supabase storage instead of localStorage
+    const { error } = await saveToStorage(
+      "products/catalog.json",
+      updatedProducts,
+    );
+    if (error) {
+      console.error("Error saving updated products:", error);
+    }
+
     setIsEditDialogOpen(false);
     setCurrentProduct(null);
   };
 
-  const handleDeleteProduct = () => {
+  const handleDeleteProduct = async () => {
     if (!currentProduct) return;
 
     const filteredProducts = products.filter(
@@ -121,7 +166,16 @@ const Products = () => {
     );
 
     setProducts(filteredProducts);
-    saveToLocalStorage("warehouse-products", filteredProducts);
+
+    // Save to Supabase storage instead of localStorage
+    const { error } = await saveToStorage(
+      "products/catalog.json",
+      filteredProducts,
+    );
+    if (error) {
+      console.error("Error saving products after deletion:", error);
+    }
+
     setIsDeleteDialogOpen(false);
     setCurrentProduct(null);
   };

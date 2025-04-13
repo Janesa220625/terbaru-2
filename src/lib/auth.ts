@@ -1,22 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/supabase";
-import { UserProfile, UserRole, DEFAULT_PERMISSIONS } from "@/types/auth";
-
-// Initialize the Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(
-    "Supabase credentials are missing. Please check your environment variables.",
-  );
-}
-
-// Only create the client if both URL and key are available
-export const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? createClient<Database>(supabaseUrl, supabaseAnonKey)
-    : (null as unknown as ReturnType<typeof createClient<Database>>);
+import { supabase } from "./supabase";
+import type { User, Session } from "@supabase/supabase-js";
+import type { UserProfile, UserRole, UserPermissions } from "@/types/auth";
+import { DEFAULT_PERMISSIONS } from "@/types/auth";
 
 /**
  * Utility function to handle Supabase errors consistently
@@ -29,84 +14,18 @@ export const handleSupabaseError = (error: Error, context: string) => {
 
 /**
  * Check if the Supabase connection is working
- * @returns Detailed connection status information
  */
-export const checkSupabaseConnection = async (): Promise<{
-  connected: boolean;
-  details: {
-    credentialsPresent: boolean;
-    healthCheckTableExists: boolean;
-    tablesAvailable?: string[];
-    error?: string;
-    timestamp: string;
-  };
-}> => {
-  const details = {
-    credentialsPresent: false,
-    healthCheckTableExists: false,
-    timestamp: new Date().toISOString(),
-  };
-
+export const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
-    // Check if credentials are available
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error(
-        "Supabase credentials are missing. Cannot check connection.",
-      );
-      details.error = "Supabase credentials are missing";
-      return { connected: false, details };
-    }
-
-    details.credentialsPresent = true;
-    console.log("Checking Supabase connection...");
-    console.log("Supabase URL:", supabaseUrl);
-    console.log(
-      "Supabase Anon Key:",
-      supabaseAnonKey ? "[PRESENT]" : "[MISSING]",
-    );
-
-    // Try to access the health_check table
-    const { data: healthData, error: healthError } = await supabase
+    const { data, error } = await supabase
       .from("health_check")
       .select("*")
       .limit(1);
-
-    if (healthError) {
-      console.error("Supabase health check error:", healthError);
-      details.error = `Health check failed: ${healthError.message}`;
-
-      // Check if the error is due to the table not existing
-      if (healthError.message.includes("does not exist")) {
-        details.error =
-          "Health check table does not exist. Run migrations first.";
-      }
-
-      return { connected: false, details };
-    }
-
-    details.healthCheckTableExists = true;
-    console.log("Supabase health check successful, data:", healthData);
-
-    // Try to get a list of available tables
-    try {
-      const { data: tablesData, error: tablesError } =
-        await supabase.rpc("get_tables");
-
-      if (tablesError) {
-        console.warn("Could not retrieve table list:", tablesError);
-      } else if (tablesData) {
-        details.tablesAvailable = tablesData;
-        console.log("Available tables:", tablesData);
-      }
-    } catch (tablesError) {
-      console.warn("Error calling get_tables function:", tablesError);
-    }
-
-    return { connected: true, details };
+    if (error) throw error;
+    return true;
   } catch (error) {
     console.error("Failed to connect to Supabase:", error);
-    details.error = error instanceof Error ? error.message : String(error);
-    return { connected: false, details };
+    return false;
   }
 };
 
@@ -115,13 +34,6 @@ export const checkSupabaseConnection = async (): Promise<{
  */
 export const getCurrentUser = async (): Promise<UserProfile | null> => {
   try {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error(
-        "Supabase credentials are missing. Cannot get current user.",
-      );
-      return null;
-    }
-
     // Get the actual Supabase user
     const {
       data: { user },
@@ -193,22 +105,14 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
 /**
  * Sign in with email and password
  */
-export const signInWithEmail = async (email: string, password: string) => {
+export async function signInWithEmail(email: string, password: string) {
   try {
     // Validate inputs
     if (!email?.trim() || !password?.trim()) {
       throw new Error("Email and password are required");
     }
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      const error = new Error(
-        "Supabase credentials are missing. Cannot sign in.",
-      );
-      handleSupabaseError(error, "signInWithEmail");
-      throw error;
-    }
-
-    // Authentication flow using Supabase
+    // Use Supabase authentication
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -219,12 +123,12 @@ export const signInWithEmail = async (email: string, password: string) => {
     handleSupabaseError(error as Error, "signInWithEmail");
     return { error };
   }
-};
+}
 
 /**
- * Sign up a new user
+ * Sign up with email and password
  */
-export const signUpWithEmail = async (
+export async function signUpWithEmail(
   email: string,
   password: string,
   userData: {
@@ -233,16 +137,8 @@ export const signUpWithEmail = async (
     role?: UserRole;
     warehouseId?: string;
   },
-) => {
+) {
   try {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      const error = new Error(
-        "Supabase credentials are missing. Cannot sign up.",
-      );
-      handleSupabaseError(error, "signUpWithEmail");
-      throw error;
-    }
-
     // Create the user in Supabase Auth
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -281,7 +177,6 @@ export const signUpWithEmail = async (
 
     if (profileError) {
       console.error("Error creating user profile:", profileError.message);
-      // Consider deleting the auth user if profile creation fails
       throw profileError;
     }
 
@@ -290,7 +185,7 @@ export const signUpWithEmail = async (
     handleSupabaseError(error as Error, "signUpWithEmail");
     throw error;
   }
-};
+}
 
 /**
  * Update user profile
@@ -305,14 +200,6 @@ export const updateUserProfile = async (
   },
 ) => {
   try {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      const error = new Error(
-        "Supabase credentials are missing. Cannot update profile.",
-      );
-      handleSupabaseError(error, "updateUserProfile");
-      throw error;
-    }
-
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -337,11 +224,6 @@ export const updateUserProfile = async (
  */
 export const getAllUsers = async (): Promise<UserProfile[]> => {
   try {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error("Supabase credentials are missing. Cannot get users.");
-      return [];
-    }
-
     // Check if current user is admin
     const currentUser = await getCurrentUser();
     if (!currentUser || currentUser.role !== "admin") {
@@ -374,16 +256,8 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
 /**
  * Sign out the current user
  */
-export const signOut = async () => {
+export async function signOut() {
   try {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      const error = new Error(
-        "Supabase credentials are missing. Cannot sign out.",
-      );
-      handleSupabaseError(error, "signOut");
-      throw error;
-    }
-
     // Attempt to sign out from Supabase
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -402,18 +276,18 @@ export const signOut = async () => {
       }
     });
 
-    return true;
+    return { success: true };
   } catch (error) {
     handleSupabaseError(error as Error, "signOut");
-    throw error;
+    return { success: false, error };
   }
-};
+}
 
 /**
  * Check if user has a specific permission
  */
 export const hasPermission = async (
-  permission: keyof UserProfile["permissions"],
+  permission: keyof UserPermissions,
 ): Promise<boolean> => {
   try {
     const user = await getCurrentUser();
@@ -424,3 +298,30 @@ export const hasPermission = async (
     return false;
   }
 };
+
+/**
+ * Get the current session
+ */
+export async function getSession() {
+  const { data, error } = await supabase.auth.getSession();
+  return { session: data.session, error };
+}
+
+/**
+ * Get the current user
+ */
+export async function getUser() {
+  const { data } = await supabase.auth.getUser();
+  return data.user;
+}
+
+/**
+ * Set up auth state change listener
+ */
+export function onAuthStateChange(
+  callback: (user: User | null, session: Session | null) => void,
+) {
+  return supabase.auth.onAuthStateChange((event, session) => {
+    callback(session?.user || null, session);
+  });
+}

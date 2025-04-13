@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "../../components/ui/card";
 import {
   Table,
   TableBody,
@@ -13,11 +13,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
+} from "../../components/ui/table";
+import { Button } from "../../components/ui/button";
+import { Checkbox } from "../../components/ui/checkbox";
+import { useToast } from "../../components/ui/use-toast";
 import { Save } from "lucide-react";
+import { loadFromStorage, saveToStorage } from "@/lib/storage";
 
 interface Module {
   id: string;
@@ -91,7 +92,7 @@ const AccessSettings = () => {
     },
   ];
 
-  const [roleAccess, setRoleAccess] = useState<RoleAccess[]>([
+  const defaultRoleAccess: RoleAccess[] = [
     {
       roleId: "1",
       roleName: "Admin",
@@ -193,7 +194,34 @@ const AccessSettings = () => {
         "settings.language": true,
       },
     },
-  ]);
+  ];
+
+  const [roleAccess, setRoleAccess] = useState<RoleAccess[]>(defaultRoleAccess);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Load role access settings from Supabase storage
+  useEffect(() => {
+    const loadRoleAccess = async () => {
+      setIsLoading(true);
+      try {
+        const { data: savedRoleAccess, error } = await loadFromStorage<
+          RoleAccess[]
+        >("settings/role-access.json", defaultRoleAccess);
+
+        if (error) {
+          console.error("Error loading role access settings:", error);
+        } else if (savedRoleAccess) {
+          setRoleAccess(savedRoleAccess);
+        }
+      } catch (err) {
+        console.error("Failed to load role access settings:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRoleAccess();
+  }, []);
 
   const handleAccessChange = (
     roleId: string,
@@ -215,12 +243,38 @@ const AccessSettings = () => {
     );
   };
 
-  const handleSaveChanges = () => {
-    // In a real application, this would save to the database
-    toast({
-      title: "Success",
-      description: "Access settings saved successfully.",
-    });
+  const handleSaveChanges = async () => {
+    setIsLoading(true);
+    try {
+      // Save to Supabase storage instead of localStorage
+      const { error } = await saveToStorage(
+        "settings/role-access.json",
+        roleAccess,
+      );
+
+      if (error) {
+        console.error("Error saving role access settings:", error);
+        toast({
+          title: "Error",
+          description: "Failed to save access settings. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Access settings saved successfully.",
+        });
+      }
+    } catch (err) {
+      console.error("Failed to save role access settings:", err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -236,9 +290,10 @@ const AccessSettings = () => {
           <Button
             className="flex items-center gap-2"
             onClick={handleSaveChanges}
+            disabled={isLoading}
           >
             <Save className="h-4 w-4" />
-            Save Changes
+            {isLoading ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </CardHeader>
@@ -280,7 +335,7 @@ const AccessSettings = () => {
                                 checked as boolean,
                               )
                             }
-                            disabled={role.roleId === "1"} // Admin role always has all permissions
+                            disabled={role.roleId === "1" || isLoading} // Admin role always has all permissions
                           />
                         </TableCell>
                       ))}
