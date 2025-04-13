@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
 import type { UserProfile, UserRole, UserPermissions } from "@/types/auth";
 import { DEFAULT_PERMISSIONS } from "@/types/auth";
+import { TableNames } from "@/types/supabaseTypes";
 
 /**
  * Utility function to handle Supabase errors consistently
@@ -25,7 +26,7 @@ export const handleSupabaseError = (
 export const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
     const { data, error } = await supabase
-      .from("health_check")
+      .from("health_check" as TableNames)
       .select("*")
       .limit(1);
     if (error) throw error;
@@ -51,7 +52,7 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
 
     // Fetch user profile from profiles table
     const { data: profile, error } = await supabase
-      .from("profiles")
+      .from("profiles" as TableNames)
       .select("*")
       .eq("id", user.id)
       .single();
@@ -66,13 +67,15 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
 
       // Try to create a default profile
       const defaultRole: UserRole = "viewer";
-      const { error: createError } = await supabase.from("profiles").insert({
-        id: user.id,
-        email: user.email,
-        role: defaultRole,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+      const { error: createError } = await supabase
+        .from("profiles" as TableNames)
+        .insert({
+          id: user.id,
+          email: user.email,
+          role: defaultRole,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
 
       if (createError) {
         console.error("Failed to create default profile:", createError.message);
@@ -95,9 +98,9 @@ export const getCurrentUser = async (): Promise<UserProfile | null> => {
       id: user.id,
       email: user.email || "",
       role: (profile.role as UserRole) || "viewer",
-      firstName: profile.first_name,
-      lastName: profile.last_name,
-      warehouseId: profile.warehouse_id,
+      firstName: profile.first_name || undefined,
+      lastName: profile.last_name || undefined,
+      warehouseId: profile.warehouse_id || undefined,
       permissions: DEFAULT_PERMISSIONS[(profile.role as UserRole) || "viewer"],
       createdAt:
         profile.created_at || user.created_at || new Date().toISOString(),
@@ -171,16 +174,18 @@ export async function signUpWithEmail(
     }
 
     // Create a profile record for the user
-    const { error: profileError } = await supabase.from("profiles").insert({
-      id: data.user.id,
-      email: email,
-      first_name: userData.firstName,
-      last_name: userData.lastName,
-      role: userData.role || "staff",
-      warehouse_id: userData.warehouseId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
+    const { error: profileError } = await supabase
+      .from("profiles" as TableNames)
+      .insert({
+        id: data.user.id,
+        email: email,
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        role: userData.role || "staff",
+        warehouse_id: userData.warehouseId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
     if (profileError) {
       console.error("Error creating user profile:", profileError.message);
@@ -208,7 +213,7 @@ export const updateUserProfile = async (
 ) => {
   try {
     const { error } = await supabase
-      .from("profiles")
+      .from("profiles" as TableNames)
       .update({
         first_name: userData.firstName,
         last_name: userData.lastName,
@@ -238,7 +243,9 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
     }
 
     // Get all users from profiles table
-    const { data, error } = await supabase.from("profiles").select("*");
+    const { data, error } = await supabase
+      .from("profiles" as TableNames)
+      .select("*");
 
     if (error) throw error;
 
@@ -247,9 +254,9 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
       id: profile.id,
       email: profile.email || "",
       role: (profile.role as UserRole) || "viewer",
-      firstName: profile.first_name,
-      lastName: profile.last_name,
-      warehouseId: profile.warehouse_id,
+      firstName: profile.first_name || undefined,
+      lastName: profile.last_name || undefined,
+      warehouseId: profile.warehouse_id || undefined,
       permissions: DEFAULT_PERMISSIONS[(profile.role as UserRole) || "viewer"],
       createdAt: profile.created_at || new Date().toISOString(),
       updatedAt: profile.updated_at || new Date().toISOString(),

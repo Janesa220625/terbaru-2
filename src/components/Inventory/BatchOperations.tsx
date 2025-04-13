@@ -89,7 +89,7 @@ const BatchOperations = () => {
         // Add only the valid stock units
         if (results.validItems.length > 0) {
           addStockUnits(
-            results.validItems.map((item) => ({
+            results.validItems.map((item: any) => ({
               sku: item.sku,
               size: item.size || "",
               color: item.color || "",
@@ -97,7 +97,7 @@ const BatchOperations = () => {
               boxId: "",
               dateAdded: new Date(),
               addedBy: "Batch Import",
-            })),
+            })) as any[],
           );
 
           setImportStatus({
@@ -141,9 +141,10 @@ const BatchOperations = () => {
           // Merge with new items (replace existing ones with same SKU)
           const mergedBoxStock = [...existingBoxStock];
 
-          results.validItems.forEach((newItem: Record<string, any>) => {
+          results.validItems.forEach((newItem: any) => {
             const existingIndex = mergedBoxStock.findIndex(
-              (item) => item.sku.toLowerCase() === newItem.sku.toLowerCase(),
+              (item: any) =>
+                item.sku.toLowerCase() === newItem.sku.toLowerCase(),
             );
 
             if (existingIndex >= 0) {

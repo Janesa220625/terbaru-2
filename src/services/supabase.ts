@@ -100,7 +100,7 @@ export const checkSupabaseConnection = async (): Promise<{
     try {
       // Explicitly type the RPC function call
       const { data: tablesData, error: tablesError } = await supabase.rpc(
-        "get_tables",
+        "get_tables" as any,
         {},
       );
 

@@ -314,7 +314,7 @@ const StockOpname = () => {
           status: discrepancies > 0 ? "discrepancy" : "completed",
           matchedItems: matches,
           discrepancies: discrepancies,
-        };
+        } as StockOpnameItem;
       }
       return item;
     });
